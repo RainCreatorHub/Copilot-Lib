@@ -1,2 +1,2 @@
-# `Irei usar somente o copilot do github.`
+# `Irei usar somente o Deep Seek.`
 # `Não irei alterar nada que ele fizer.`
