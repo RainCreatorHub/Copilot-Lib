@@ -9,6 +9,14 @@ function TitleBar.new(config)
     self.Parent = config.Parent
     self.OnClose = config.OnClose or function() end
     self.OnMinimize = config.OnMinimize or function() end
+    self.Theme = config.Theme or {
+        BackgroundTertiary = Color3.fromRGB(22, 27, 34),
+        Text = Color3.fromRGB(248, 250, 252),
+        TextSecondary = Color3.fromRGB(139, 148, 160),
+        Accent = Color3.fromRGB(33, 139, 255),
+        Border = Color3.fromRGB(48, 54, 61),
+        Error = Color3.fromRGB(220, 53, 69)
+    }
     
     self:_Create()
     
@@ -21,15 +29,15 @@ function TitleBar:_Create()
     self.Container.Name = "TitleBar"
     self.Container.Size = UDim2.new(1, 0, 0, 60)
     self.Container.Position = UDim2.new(0, 0, 0, 0)
-    self.Container.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
+    self.Container.BackgroundColor3 = self.Theme.BackgroundTertiary
     self.Container.BorderSizePixel = 0
     self.Container.Parent = self.Parent
     
     -- Gradient effect
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(22, 27, 34)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(28, 33, 40))
+        ColorSequenceKeypoint.new(0, self.Theme.BackgroundTertiary),
+        ColorSequenceKeypoint.new(1, self.Theme.BackgroundTertiary:Lerp(Color3.new(1,1,1), 0.1))
     })
     gradient.Rotation = 90
     gradient.Parent = self.Container
@@ -39,7 +47,7 @@ function TitleBar:_Create()
     border.Name = "BottomBorder"
     border.Size = UDim2.new(1, 0, 0, 1)
     border.Position = UDim2.new(0, 0, 1, -1)
-    border.BackgroundColor3 = Color3.fromRGB(33, 139, 255)
+    border.BackgroundColor3 = self.Theme.Accent
     border.BorderSizePixel = 0
     border.Parent = self.Container
     
@@ -50,7 +58,7 @@ function TitleBar:_Create()
     self.TitleLabel.Position = UDim2.new(0, 15, 0, 10)
     self.TitleLabel.BackgroundTransparency = 1
     self.TitleLabel.Text = self.Title
-    self.TitleLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+    self.TitleLabel.TextColor3 = self.Theme.Text
     self.TitleLabel.TextSize = 18
     self.TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.TitleLabel.Font = Enum.Font.GothamBold
@@ -63,7 +71,7 @@ function TitleBar:_Create()
     self.SubTitleLabel.Position = UDim2.new(0, 15, 0, 34)
     self.SubTitleLabel.BackgroundTransparency = 1
     self.SubTitleLabel.Text = self.SubTitle
-    self.SubTitleLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
+    self.SubTitleLabel.TextColor3 = self.Theme.TextSecondary
     self.SubTitleLabel.TextSize = 14
     self.SubTitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.SubTitleLabel.Font = Enum.Font.Gotham
@@ -83,11 +91,11 @@ function TitleBar:_Create()
     self.MinimizeButton.Size = UDim2.new(0, 25, 0, 25)
     self.MinimizeButton.Position = UDim2.new(0, 0, 0.5, -12)
     self.MinimizeButton.AnchorPoint = Vector2.new(0, 0.5)
-    self.MinimizeButton.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    self.MinimizeButton.BackgroundColor3 = self.Theme.Accent
     self.MinimizeButton.BorderSizePixel = 1
-    self.MinimizeButton.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    self.MinimizeButton.BorderColor3 = self.Theme.Border
     self.MinimizeButton.Text = "–"
-    self.MinimizeButton.TextColor3 = Color3.fromRGB(248, 250, 252)
+    self.MinimizeButton.TextColor3 = self.Theme.Text
     self.MinimizeButton.TextSize = 16
     self.MinimizeButton.Font = Enum.Font.GothamBold
     self.MinimizeButton.Parent = buttonContainer
@@ -102,11 +110,11 @@ function TitleBar:_Create()
     self.CloseButton.Size = UDim2.new(0, 25, 0, 25)
     self.CloseButton.Position = UDim2.new(0, 30, 0.5, -12)
     self.CloseButton.AnchorPoint = Vector2.new(0, 0.5)
-    self.CloseButton.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    self.CloseButton.BackgroundColor3 = self.Theme.Accent
     self.CloseButton.BorderSizePixel = 1
-    self.CloseButton.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    self.CloseButton.BorderColor3 = self.Theme.Border
     self.CloseButton.Text = "×"
-    self.CloseButton.TextColor3 = Color3.fromRGB(248, 250, 252)
+    self.CloseButton.TextColor3 = self.Theme.Text
     self.CloseButton.TextSize = 18
     self.CloseButton.Font = Enum.Font.GothamBold
     self.CloseButton.Parent = buttonContainer
@@ -127,7 +135,7 @@ function TitleBar:_SetupButtonAnimations()
         tweenService:Create(
             self.MinimizeButton,
             TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}
+            {BackgroundColor3 = self.Theme.Accent:Lerp(Color3.new(1,1,1), 0.2)}
         ):Play()
     end)
     
@@ -135,7 +143,7 @@ function TitleBar:_SetupButtonAnimations()
         tweenService:Create(
             self.MinimizeButton,
             TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = Color3.fromRGB(33, 38, 45)}
+            {BackgroundColor3 = self.Theme.Accent}
         ):Play()
     end)
     
@@ -143,7 +151,7 @@ function TitleBar:_SetupButtonAnimations()
         tweenService:Create(
             self.MinimizeButton,
             TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = Color3.fromRGB(21, 107, 191)}
+            {BackgroundColor3 = self.Theme.Accent:Lerp(Color3.new(0,0,0), 0.2)}
         ):Play()
     end)
     
@@ -151,7 +159,7 @@ function TitleBar:_SetupButtonAnimations()
         tweenService:Create(
             self.MinimizeButton,
             TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}
+            {BackgroundColor3 = self.Theme.Accent:Lerp(Color3.new(1,1,1), 0.2)}
         ):Play()
     end)
     
@@ -160,7 +168,7 @@ function TitleBar:_SetupButtonAnimations()
         tweenService:Create(
             self.CloseButton,
             TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = Color3.fromRGB(220, 53, 69)}
+            {BackgroundColor3 = self.Theme.Error}
         ):Play()
     end)
     
@@ -168,7 +176,7 @@ function TitleBar:_SetupButtonAnimations()
         tweenService:Create(
             self.CloseButton,
             TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = Color3.fromRGB(33, 38, 45)}
+            {BackgroundColor3 = self.Theme.Accent}
         ):Play()
     end)
     
@@ -176,7 +184,7 @@ function TitleBar:_SetupButtonAnimations()
         tweenService:Create(
             self.CloseButton,
             TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = Color3.fromRGB(190, 33, 49)}
+            {BackgroundColor3 = self.Theme.Error:Lerp(Color3.new(0,0,0), 0.2)}
         ):Play()
     end)
     
@@ -184,7 +192,7 @@ function TitleBar:_SetupButtonAnimations()
         tweenService:Create(
             self.CloseButton,
             TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = Color3.fromRGB(220, 53, 69)}
+            {BackgroundColor3 = self.Theme.Error}
         ):Play()
     end)
     
