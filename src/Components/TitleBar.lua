@@ -1,68 +1,102 @@
-local TitleBar = {}
-TitleBar.__index = TitleBar
+local Window = {}
+Window.__index = Window
 
-function TitleBar.new(config)
-    local self = setmetatable({}, TitleBar)
+function Window.new(config)
+    local self = setmetatable({}, Window)
     
-    self.Title = config.Title or "Title"
+    self.Title = config.Title or "Window"
     self.SubTitle = config.SubTitle or ""
-    self.Parent = config.Parent
+    self.Tabs = {}
+    self.CurrentTab = nil
     
-    self:_Create()
+    self:_CreateGUI()
+    self:_CreateTitleBar()
     
     return self
 end
 
-function TitleBar:_Create()
-    self.Container = Instance.new("Frame")
-    self.Container.Name = "TitleBar"
-    self.Container.Size = UDim2.new(1, 0, 0, 60)
-    self.Container.Position = UDim2.new(0, 0, 0, 0)
-    self.Container.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
-    self.Container.BorderSizePixel = 0
-    self.Container.Parent = self.Parent
+function Window:_CreateGUI()
+    self.ScreenGui = Instance.new("ScreenGui")
+    self.ScreenGui.Name = "DeepLibWindow"
+    self.ScreenGui.ResetOnSpawn = false
+    self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    self.ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     
-    local border = Instance.new("Frame")
-    border.Name = "BottomBorder"
-    border.Size = UDim2.new(1, 0, 0, 1)
-    border.Position = UDim2.new(0, 0, 1, -1)
-    border.BackgroundColor3 = Color3.fromRGB(48, 54, 61)
-    border.BorderSizePixel = 0
-    border.Parent = self.Container
+    self.MainFrame = Instance.new("Frame")
+    self.MainFrame.Name = "MainWindow"
+    self.MainFrame.Size = UDim2.new(0, 470, 0, 340)
+    self.MainFrame.Position = UDim2.new(0.5, -235, 0.5, -170)
+    self.MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    self.MainFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    self.MainFrame.BorderSizePixel = 0
+    self.MainFrame.ClipsDescendants = true
+    self.MainFrame.Parent = self.ScreenGui
     
-    self.TitleLabel = Instance.new("TextLabel")
-    self.TitleLabel.Name = "Title"
-    self.TitleLabel.Size = UDim2.new(1, -20, 0, 24)
-    self.TitleLabel.Position = UDim2.new(0, 10, 0, 10)
-    self.TitleLabel.BackgroundTransparency = 1
-    self.TitleLabel.Text = self.Title
-    self.TitleLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
-    self.TitleLabel.TextSize = 18
-    self.TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    self.TitleLabel.Font = Enum.Font.GothamBold
-    self.TitleLabel.Parent = self.Container
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = self.MainFrame
     
-    self.SubTitleLabel = Instance.new("TextLabel")
-    self.SubTitleLabel.Name = "SubTitle"
-    self.SubTitleLabel.Size = UDim2.new(1, -20, 0, 16)
-    self.SubTitleLabel.Position = UDim2.new(0, 10, 0, 34)
-    self.SubTitleLabel.BackgroundTransparency = 1
-    self.SubTitleLabel.Text = self.SubTitle
-    self.SubTitleLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
-    self.SubTitleLabel.TextSize = 14
-    self.SubTitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    self.SubTitleLabel.Font = Enum.Font.Gotham
-    self.SubTitleLabel.Parent = self.Container
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.Image = "rbxassetid://1316045217"
+    shadow.ImageColor3 = Color3.new(0, 0, 0)
+    shadow.ImageTransparency = 0.8
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    shadow.Size = UDim2.new(1, 20, 1, 20)
+    shadow.Position = UDim2.new(0, -10, 0, -10)
+    shadow.BackgroundTransparency = 1
+    shadow.Parent = self.MainFrame
+    shadow.ZIndex = 0
+    
+    self.ContentFrame = Instance.new("Frame")
+    self.ContentFrame.Name = "Content"
+    self.ContentFrame.Size = UDim2.new(1, 0, 1, -60)
+    self.ContentFrame.Position = UDim2.new(0, 0, 0, 60)
+    self.ContentFrame.BackgroundTransparency = 1
+    self.ContentFrame.Parent = self.MainFrame
+    
+    self.TabContainer = Instance.new("Frame")
+    self.TabContainer.Name = "TabContainer"
+    self.TabContainer.Size = UDim2.new(1, -20, 1, -10)
+    self.TabContainer.Position = UDim2.new(0, 10, 0, 5)
+    self.TabContainer.BackgroundTransparency = 1
+    self.TabContainer.Parent = self.ContentFrame
 end
 
-function TitleBar:UpdateTitle(newTitle)
-    self.Title = newTitle
-    self.TitleLabel.Text = newTitle
+function Window:_CreateTitleBar()
+    local TitleBarModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/TitleBar.lua"))()
+    self.TitleBar = TitleBarModule.new({
+        Title = self.Title,
+        SubTitle = self.SubTitle,
+        Parent = self.MainFrame
+    })
 end
 
-function TitleBar:UpdateSubTitle(newSubTitle)
-    self.SubTitle = newSubTitle
-    self.SubTitleLabel.Text = newSubTitle
+function Window:Tab(tabConfig)
+    local TabModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Tab.lua"))()
+    local newTab = TabModule.new(tabConfig, self.TabContainer)
+    table.insert(self.Tabs, newTab)
+    
+    if not self.CurrentTab then
+        self.CurrentTab = newTab
+        newTab:SetVisible(true)
+    else
+        newTab:SetVisible(false)
+    end
+    
+    return newTab
 end
 
-return TitleBar
+function Window:Notify(notifyConfig)
+    local NotifyModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Notify.lua"))()
+    return NotifyModule.new(notifyConfig, self)
+end
+
+function Window:Destroy()
+    if self.ScreenGui then
+        self.ScreenGui:Destroy()
+    end
+end
+
+return Window
