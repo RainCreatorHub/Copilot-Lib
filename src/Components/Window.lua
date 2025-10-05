@@ -96,6 +96,12 @@ function Window:Tab(tabConfig)
     return newTab
 end
 
+-- In src/Components/Window.lua, add this method to the Window class
+function Window:Notify(notifyConfig)
+    local Notify = require(script.Parent.Notify)
+    return Notify.new(notifyConfig, self)
+end
+
 function Window:Destroy()
     if self.ScreenGui then
         self.ScreenGui:Destroy()
