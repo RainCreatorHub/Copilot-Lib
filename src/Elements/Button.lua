@@ -1,13 +1,21 @@
 local Button = {}
 Button.__index = Button
 
-function Button.new(config, parent)
+function Button.new(config, parent, theme)
     local self = setmetatable({}, Button)
     
     self.Name = config.Name or "Button"
     self.Desc = config.Desc or ""
     self.Callback = config.Callback or function() end
     self.Parent = parent
+    self.Theme = theme or {
+        Background = Color3.fromRGB(33, 38, 45),
+        BackgroundSecondary = Color3.fromRGB(25, 30, 35),
+        Text = Color3.fromRGB(248, 250, 252),
+        TextSecondary = Color3.fromRGB(139, 148, 160),
+        Accent = Color3.fromRGB(33, 139, 255),
+        Border = Color3.fromRGB(48, 54, 61)
+    }
     self.Locked = false
     
     self:_Create()
@@ -29,9 +37,9 @@ function Button:_Create()
     self.ButtonFrame.Name = "Button"
     self.ButtonFrame.Size = UDim2.new(1, 0, 0, 45)
     self.ButtonFrame.Position = UDim2.new(0, 0, 0, 0)
-    self.ButtonFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    self.ButtonFrame.BackgroundColor3 = self.Theme.Background
     self.ButtonFrame.BorderSizePixel = 1
-    self.ButtonFrame.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    self.ButtonFrame.BorderColor3 = self.Theme.Border
     self.ButtonFrame.Text = ""
     self.ButtonFrame.Parent = self.Container
     
@@ -46,7 +54,7 @@ function Button:_Create()
     self.NameLabel.Position = UDim2.new(0, 10, 0, 5)
     self.NameLabel.BackgroundTransparency = 1
     self.NameLabel.Text = self.Name
-    self.NameLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+    self.NameLabel.TextColor3 = self.Theme.Text
     self.NameLabel.TextSize = 14
     self.NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.NameLabel.Font = Enum.Font.GothamBold
@@ -59,7 +67,7 @@ function Button:_Create()
     self.DescLabel.Position = UDim2.new(0, 10, 0, 25)
     self.DescLabel.BackgroundTransparency = 1
     self.DescLabel.Text = self.Desc
-    self.DescLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
+    self.DescLabel.TextColor3 = self.Theme.TextSecondary
     self.DescLabel.TextSize = 11
     self.DescLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.DescLabel.Font = Enum.Font.Gotham
@@ -71,7 +79,7 @@ function Button:_Create()
             game:GetService("TweenService"):Create(
                 self.ButtonFrame, 
                 TweenInfo.new(0.2), 
-                {BackgroundColor3 = Color3.fromRGB(40, 46, 55)}
+                {BackgroundColor3 = self.Theme.Background:Lerp(Color3.new(1,1,1), 0.1)}
             ):Play()
         end
     end)
@@ -81,7 +89,7 @@ function Button:_Create()
             game:GetService("TweenService"):Create(
                 self.ButtonFrame, 
                 TweenInfo.new(0.2), 
-                {BackgroundColor3 = Color3.fromRGB(33, 38, 45)}
+                {BackgroundColor3 = self.Theme.Background}
             ):Play()
         end
     end)
@@ -93,7 +101,7 @@ function Button:_Create()
             game:GetService("TweenService"):Create(
                 self.ButtonFrame, 
                 TweenInfo.new(0.1), 
-                {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}
+                {BackgroundColor3 = self.Theme.Accent}
             ):Play()
             
             wait(0.1)
@@ -101,7 +109,7 @@ function Button:_Create()
             game:GetService("TweenService"):Create(
                 self.ButtonFrame, 
                 TweenInfo.new(0.1), 
-                {BackgroundColor3 = Color3.fromRGB(33, 38, 45)}
+                {BackgroundColor3 = self.Theme.Background}
             ):Play()
             
             -- Call callback
@@ -130,11 +138,11 @@ end
 function Button:SetLocked(isLocked)
     self.Locked = isLocked
     if self.Locked then
-        self.ButtonFrame.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
-        self.NameLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
+        self.ButtonFrame.BackgroundColor3 = self.Theme.BackgroundSecondary
+        self.NameLabel.TextColor3 = self.Theme.TextSecondary
     else
-        self.ButtonFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
-        self.NameLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+        self.ButtonFrame.BackgroundColor3 = self.Theme.Background
+        self.NameLabel.TextColor3 = self.Theme.Text
     end
 end
 
