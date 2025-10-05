@@ -139,6 +139,8 @@ function Window:Open()
     end
 end
 
+-- In your existing Window.lua file, update the Tab method:
+
 function Window:Tab(tabConfig)
     local TabModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Tab.lua"))()
     local newTab = TabModule.new(tabConfig, self.TabContainer)
@@ -154,7 +156,6 @@ function Window:Tab(tabConfig)
     
     return newTab
 end
-
 function Window:Notify(notifyConfig)
     local NotifyModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Notify.lua"))()
     return NotifyModule.new(notifyConfig, self)
