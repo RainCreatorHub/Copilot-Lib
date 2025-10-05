@@ -162,16 +162,59 @@ function Window:Notify(notifyConfig)
     return NotifyModule.new(notifyConfig, self)
 end
 
-function Window:Destroy()
-    if self.ScreenGui then
-        self.ScreenGui:Destroy()
+-- In src/Components/Window.lua, inside the Window module
+
+function Window:SetTitle(newTitle)
+    if self.TitleBar and self.TitleBar.UpdateTitle then
+        self.TitleBar:UpdateTitle(newTitle)
+    end
+    self.Title = newTitle
+end
+
+function Window:SetSubTitle(newSubTitle)
+    if self.TitleBar and self.TitleBar.UpdateSubTitle then
+        self.TitleBar:UpdateSubTitle(newSubTitle)
+    end
+    self.SubTitle = newSubTitle
+end
+
+function Window:SetPos(newPosition)
+    -- newPosition should be a UDim2 value
+    -- Example: UDim2.new(0.5, -235, 0.5, -170)
+    if self.MainFrame and typeof(newPosition) == "UDim2" then
+        self.MainFrame.Position = newPosition
     end
 end
 
--- Método adicional para reposicionar a janela se necessário
-function Window:SetPosition(newPosition)
-    if typeof(newPosition) == "UDim2" then
-        self.MainFrame.Position = newPosition
+function Window:SetSize(newSize)
+    -- newSize should be a UDim2 value
+    -- Example: UDim2.new(0, 470, 0, 340)
+    if self.MainFrame and typeof(newSize) == "UDim2" then
+        self.MainFrame.Size = newSize
+    end
+end
+
+function Window:Destroy()
+    if self.ScreenGui then
+        self.ScreenGui:Destroy()
+        self.ScreenGui = nil
+    end
+    -- Clean up other references to help with memory
+    self.Tabs = nil
+    self.CurrentTab = nil
+end
+
+function Window:Close()
+    if self.ScreenGui then
+        self.ScreenGui.Enabled = false
+        -- Alternatively, you can use: self.ScreenGui.Visible = false
+    end
+end
+
+function Window:Open()
+    if self.ScreenGui then
+        self.ScreenGui.Enabled = true
+        -- Alternatively, you can use: self.ScreenGui.Visible = true
     end
 end
 
