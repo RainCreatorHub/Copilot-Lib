@@ -6,17 +6,25 @@ function Window.new(config)
     
     self.Title = config.Title or "Window"
     self.SubTitle = config.SubTitle or ""
+    self.Resizable = config.Resizable or true
+    self.Icon = config.Icon or nil
+    self.Theme = config.Theme or "Dark"
     self.Tabs = {}
     self.CurrentTab = nil
     self.IsOpen = true
     self.IsMinimized = false
-    self.Resizable = config.Resizable or true
     
+    self:_LoadTheme()
     self:_CreateGUI()
     self:_CreateTitleBar()
     self:_CreateTabBar()
     
     return self
+end
+
+function Window:_LoadTheme()
+    local themeModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Themes/" .. self.Theme .. ".lua"))()
+    self.ThemeData = themeModule
 end
 
 function Window:_CreateGUI()
@@ -31,12 +39,12 @@ function Window:_CreateGUI()
     -- Main Window Container
     self.MainFrame = Instance.new("Frame")
     self.MainFrame.Name = "MainWindow"
-    self.MainFrame.Size = UDim2.new(0, 600, 0, 400) -- Tamanho aumentado para caber tabs lateral
+    self.MainFrame.Size = UDim2.new(0, 470, 0, 340)
     self.MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     self.MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-    self.MainFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    self.MainFrame.BackgroundColor3 = self.ThemeData.Background
     self.MainFrame.BorderSizePixel = 1
-    self.MainFrame.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    self.MainFrame.BorderColor3 = self.ThemeData.Border
     self.MainFrame.ClipsDescendants = true
     self.MainFrame.Parent = self.ScreenGui
     
@@ -48,7 +56,7 @@ function Window:_CreateGUI()
     local shadow = Instance.new("ImageLabel")
     shadow.Name = "Shadow"
     shadow.Image = "rbxassetid://1316045217"
-    shadow.ImageColor3 = Color3.new(0, 0, 0)
+    shadow.ImageColor3 = self.ThemeData.Shadow
     shadow.ImageTransparency = 0.8
     shadow.ScaleType = Enum.ScaleType.Slice
     shadow.SliceCenter = Rect.new(10, 10, 118, 118)
@@ -58,11 +66,11 @@ function Window:_CreateGUI()
     shadow.Parent = self.MainFrame
     shadow.ZIndex = 0
     
-    -- Content area (agora menor devido à tab bar lateral)
+    -- Content area
     self.ContentFrame = Instance.new("Frame")
     self.ContentFrame.Name = "Content"
-    self.ContentFrame.Size = UDim2.new(1, -130, 1, -60) -- Espaço para tab bar lateral
-    self.ContentFrame.Position = UDim2.new(0, 130, 0, 60) -- Começa após a tab bar
+    self.ContentFrame.Size = UDim2.new(1, -130, 1, -60)
+    self.ContentFrame.Position = UDim2.new(0, 130, 0, 60)
     self.ContentFrame.BackgroundTransparency = 1
     self.ContentFrame.Parent = self.MainFrame
     
@@ -77,7 +85,7 @@ function Window:_CreateResizeGrip()
     self.ResizeGrip.Name = "ResizeGrip"
     self.ResizeGrip.Size = UDim2.new(0, 15, 0, 15)
     self.ResizeGrip.Position = UDim2.new(1, -15, 1, -15)
-    self.ResizeGrip.BackgroundColor3 = Color3.fromRGB(33, 139, 255)
+    self.ResizeGrip.BackgroundColor3 = self.ThemeData.Accent
     self.ResizeGrip.BorderSizePixel = 0
     self.ResizeGrip.Text = ""
     self.ResizeGrip.ZIndex = 10
@@ -92,7 +100,7 @@ function Window:_CreateResizeGrip()
         game:GetService("TweenService"):Create(
             self.ResizeGrip,
             TweenInfo.new(0.2),
-            {BackgroundColor3 = Color3.fromRGB(66, 153, 225)}
+            {BackgroundColor3 = self.ThemeData.Accent:Lerp(Color3.new(1,1,1), 0.2)}
         ):Play()
     end)
     
@@ -100,7 +108,7 @@ function Window:_CreateResizeGrip()
         game:GetService("TweenService"):Create(
             self.ResizeGrip,
             TweenInfo.new(0.2),
-            {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}
+            {BackgroundColor3 = self.ThemeData.Accent}
         ):Play()
     end)
     
@@ -112,7 +120,7 @@ function Window:_CreateResizeGrip()
         dragging = true
         dragStart = input.Position
         startSize = self.MainFrame.Size
-        self.ResizeGrip.BackgroundColor3 = Color3.fromRGB(21, 107, 191)
+        self.ResizeGrip.BackgroundColor3 = self.ThemeData.Accent:Lerp(Color3.new(0,0,0), 0.2)
     end)
     
     game:GetService("UserInputService").InputEnded:Connect(function(input)
@@ -121,7 +129,7 @@ function Window:_CreateResizeGrip()
             game:GetService("TweenService"):Create(
                 self.ResizeGrip,
                 TweenInfo.new(0.2),
-                {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}
+                {BackgroundColor3 = self.ThemeData.Accent}
             ):Play()
         end
     end)
@@ -130,8 +138,8 @@ function Window:_CreateResizeGrip()
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             local newSize = UDim2.new(
-                0, math.max(400, startSize.X.Offset + delta.X), -- Mínimo 400 de largura
-                0, math.max(300, startSize.Y.Offset + delta.Y)  -- Mínimo 300 de altura
+                0, math.max(400, startSize.X.Offset + delta.X),
+                0, math.max(300, startSize.Y.Offset + delta.Y)
             )
             self.MainFrame.Size = newSize
         end
@@ -145,11 +153,13 @@ function Window:_CreateTitleBar()
         SubTitle = self.SubTitle,
         Parent = self.MainFrame,
         OnClose = function()
-            self:Close()
+            -- Ao invés de fechar diretamente, abrimos um diálogo
+            self:CloseDialog()
         end,
         OnMinimize = function()
             self:Minimize()
-        end
+        end,
+        Theme = self.ThemeData
     })
 end
 
@@ -157,11 +167,11 @@ function Window:_CreateTabBar()
     -- Tab Bar Container (lateral esquerdo)
     self.TabBar = Instance.new("Frame")
     self.TabBar.Name = "TabBar"
-    self.TabBar.Size = UDim2.new(0, 120, 1, -60) -- Largura fixa, altura até o fim (exceto titlebar)
-    self.TabBar.Position = UDim2.new(0, 0, 0, 60) -- Abaixo da titlebar
-    self.TabBar.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
+    self.TabBar.Size = UDim2.new(0, 120, 1, -60)
+    self.TabBar.Position = UDim2.new(0, 0, 0, 60)
+    self.TabBar.BackgroundColor3 = self.ThemeData.BackgroundTertiary
     self.TabBar.BorderSizePixel = 1
-    self.TabBar.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    self.TabBar.BorderColor3 = self.ThemeData.Border
     self.TabBar.Parent = self.MainFrame
     
     -- Separator entre tab bar e conteúdo
@@ -169,7 +179,7 @@ function Window:_CreateTabBar()
     separator.Name = "Separator"
     separator.Size = UDim2.new(0, 1, 1, 0)
     separator.Position = UDim2.new(1, 0, 0, 0)
-    separator.BackgroundColor3 = Color3.fromRGB(48, 54, 61)
+    separator.BackgroundColor3 = self.ThemeData.Border
     separator.BorderSizePixel = 0
     separator.Parent = self.TabBar
     
@@ -188,6 +198,37 @@ function Window:_CreateTabBar()
     listLayout.Parent = self.TabButtonsContainer
 end
 
+function Window:CloseDialog()
+    local DialogModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Dialog.lua"))()
+    local closeDialog = DialogModule.new({
+        Title = "Warn!",
+        Desc = "Are you sure you want to close the hub?",
+        Icon = nil,
+        Options = {
+            {
+                Title = "Confirm",
+                Icon = nil,
+                Callback = function()
+                    self:Destroy()
+                end
+            },
+            {
+                Title = "Cancel",
+                Icon = nil,
+                Callback = function()
+                    self:Notify({
+                        Title = "Canceled.",
+                        Desc = "The hub was not closed.",
+                        TimeE = true,
+                        Time = 3
+                    })
+                end
+            }
+        }
+    }, self)
+    closeDialog:Show()
+end
+
 function Window:Minimize()
     local tweenService = game:GetService("TweenService")
     
@@ -197,7 +238,7 @@ function Window:Minimize()
         self.TitleBar:SetMinimizeState(false)
         
         local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 600, 0, 400)})
+        local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 340)})
         
         sizeTween:Play()
         sizeTween.Completed:Wait()
@@ -213,7 +254,7 @@ function Window:Minimize()
         self.TabBar.Visible = false
         
         local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 600, 0, 60)})
+        local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 60)})
         sizeTween:Play()
     end
 end
@@ -249,7 +290,7 @@ end
 
 function Window:SetSize(sizeTable)
     if self.MainFrame and type(sizeTable) == "table" and #sizeTable >= 2 then
-        local newSize = UDim2.new(0, sizeTable[1] or 600, 0, sizeTable[2] or 400)
+        local newSize = UDim2.new(0, sizeTable[1] or 470, 0, sizeTable[2] or 340)
         
         local tweenService = game:GetService("TweenService")
         local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -306,7 +347,7 @@ end
 
 function Window:Tab(tabConfig)
     local TabModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Tab.lua"))()
-    local newTab = TabModule.new(tabConfig, self.ContentFrame, self.TabButtonsContainer, self)
+    local newTab = TabModule.new(tabConfig, self.ContentFrame, self.TabButtonsContainer, self, self.ThemeData)
     table.insert(self.Tabs, newTab)
     
     -- Set as current tab if it's the first one
@@ -325,6 +366,12 @@ end
 function Window:Notify(notifyConfig)
     local NotifyModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Notify.lua"))()
     return NotifyModule.new(notifyConfig, self)
+end
+
+function Window:Dialog(dialogConfig)
+    local DialogModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Dialog.lua"))()
+    local newDialog = DialogModule.new(dialogConfig, self)
+    return newDialog
 end
 
 -- Método para mudar de tab
