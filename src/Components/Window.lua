@@ -1,6 +1,3 @@
-local TitleBar = require(script.Parent.TitleBar)
-local Tab = require(script.Parent.Tab)
-
 local Window = {}
 Window.__index = Window
 
@@ -19,25 +16,22 @@ function Window.new(config)
 end
 
 function Window:_CreateGUI()
-    -- Main ScreenGui
     self.ScreenGui = Instance.new("ScreenGui")
     self.ScreenGui.Name = "DeepLibWindow"
     self.ScreenGui.ResetOnSpawn = false
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     self.ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     
-    -- Main Window Container
     self.MainFrame = Instance.new("Frame")
     self.MainFrame.Name = "MainWindow"
     self.MainFrame.Size = UDim2.new(0, 470, 0, 340)
     self.MainFrame.Position = UDim2.new(0.5, -235, 0.5, -170)
     self.MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    self.MainFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45) -- GitHub dark
+    self.MainFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
     self.MainFrame.BorderSizePixel = 0
     self.MainFrame.ClipsDescendants = true
     self.MainFrame.Parent = self.ScreenGui
     
-    -- Corner rounding
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = self.MainFrame
@@ -56,15 +50,13 @@ function Window:_CreateGUI()
     shadow.Parent = self.MainFrame
     shadow.ZIndex = 0
     
-    -- Content area (below title bar)
     self.ContentFrame = Instance.new("Frame")
     self.ContentFrame.Name = "Content"
-    self.ContentFrame.Size = UDim2.new(1, 0, 1, -60) -- Space for title bar
+    self.ContentFrame.Size = UDim2.new(1, 0, 1, -60)
     self.ContentFrame.Position = UDim2.new(0, 0, 0, 60)
     self.ContentFrame.BackgroundTransparency = 1
     self.ContentFrame.Parent = self.MainFrame
     
-    -- Tab container
     self.TabContainer = Instance.new("Frame")
     self.TabContainer.Name = "TabContainer"
     self.TabContainer.Size = UDim2.new(1, -20, 1, -10)
@@ -74,6 +66,8 @@ function Window:_CreateGUI()
 end
 
 function Window:_CreateTitleBar()
+    -- Carrega o módulo TitleBar
+    local TitleBar = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/TitleBar.lua"))()
     self.TitleBar = TitleBar.new({
         Title = self.Title,
         SubTitle = self.SubTitle,
@@ -82,10 +76,11 @@ function Window:_CreateTitleBar()
 end
 
 function Window:Tab(tabConfig)
+    -- Carrega o módulo Tab
+    local Tab = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Tab.lua"))()
     local newTab = Tab.new(tabConfig, self.TabContainer)
     table.insert(self.Tabs, newTab)
     
-    -- Set as current tab if it's the first one
     if not self.CurrentTab then
         self.CurrentTab = newTab
         newTab:SetVisible(true)
@@ -96,9 +91,9 @@ function Window:Tab(tabConfig)
     return newTab
 end
 
--- In src/Components/Window.lua, add this method to the Window class
 function Window:Notify(notifyConfig)
-    local Notify = require(script.Parent.Notify)
+    -- Carrega o módulo Notify
+    local Notify = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Notify.lua"))()
     return Notify.new(notifyConfig, self)
 end
 
