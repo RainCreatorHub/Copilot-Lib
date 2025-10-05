@@ -24,20 +24,21 @@ function Paragraph:_Create()
     self.Container.LayoutOrder = 999
     self.Container.Parent = self.Parent
     
-    -- Background frame
+    -- Background frame (COM BORDA)
     self.Background = Instance.new("Frame")
     self.Background.Name = "Background"
     self.Background.Size = UDim2.new(1, 0, 0, 55)
     self.Background.Position = UDim2.new(0, 0, 0, 0)
     self.Background.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
-    self.Background.BorderSizePixel = 0
+    self.Background.BorderSizePixel = 1
+    self.Background.BorderColor3 = Color3.fromRGB(48, 54, 61)
     self.Background.Parent = self.Container
     
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = self.Background
     
-    -- Icon (if provided)
+    -- Icon (if provided) - usando IDs fornecidos
     if self.Icon then
         self.IconLabel = Instance.new("ImageLabel")
         self.IconLabel.Name = "Icon"
