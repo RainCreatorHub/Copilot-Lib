@@ -8,6 +8,7 @@ function Button.new(config, parent)
     self.Desc = config.Desc or ""
     self.Callback = config.Callback or function() end
     self.Parent = parent
+    self.Locked = false
     
     self:_Create()
     
@@ -23,13 +24,14 @@ function Button:_Create()
     self.Container.LayoutOrder = 999
     self.Container.Parent = self.Parent
     
-    -- Button background
+    -- Button background (COM BORDA)
     self.ButtonFrame = Instance.new("TextButton")
     self.ButtonFrame.Name = "Button"
     self.ButtonFrame.Size = UDim2.new(1, 0, 0, 45)
     self.ButtonFrame.Position = UDim2.new(0, 0, 0, 0)
     self.ButtonFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
-    self.ButtonFrame.BorderSizePixel = 0
+    self.ButtonFrame.BorderSizePixel = 1
+    self.ButtonFrame.BorderColor3 = Color3.fromRGB(48, 54, 61)
     self.ButtonFrame.Text = ""
     self.ButtonFrame.Parent = self.Container
     
