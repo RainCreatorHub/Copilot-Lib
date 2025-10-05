@@ -1,45 +1,30 @@
 local Deep_Lib = {}
 
--- Módulos já carregados (cache)
 Deep_Lib._LoadedModules = {}
+Deep_Lib._BaseUrl = "https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/"
 
--- Função personalizada para carregar um módulo de uma URL do GitHub
-function Deep_Lib._loadModule(moduleName, modulePath)
-    -- Verifica se o módulo já está em cache
-    if Deep_Lib._LoadedModules[moduleName] then
-        return Deep_Lib._LoadedModules[moduleName]
+function Deep_Lib._loadModule(modulePath)
+    if Deep_Lib._LoadedModules[modulePath] then
+        return Deep_Lib._LoadedModules[modulePath]
     end
     
-    -- Constrói a URL completa para o arquivo raw no GitHub
-    local baseUrl = "https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/"
-    local fullUrl = baseUrl .. modulePath .. ".lua"
-    
-    -- Faz a requisição HTTP e carrega o módulo
-    local success, moduleScript = pcall(function()
-        local httpContent = game:HttpGet(fullUrl)
-        return loadstring(httpContent)()
+    local fullUrl = Deep_Lib._BaseUrl .. modulePath
+    local success, result = pcall(function()
+        local response = game:HttpGet(fullUrl, true)
+        return loadstring(response)()
     end)
     
     if not success then
-        error("Falha ao carregar o módulo: " .. moduleName .. " de: " .. fullUrl)
+        error("[Deep_Lib] Failed to load module: " .. modulePath .. " | Error: " .. tostring(result))
     end
     
-    -- Armazena no cache e retorna
-    Deep_Lib._LoadedModules[moduleName] = moduleScript
-    return moduleScript
+    Deep_Lib._LoadedModules[modulePath] = result
+    return result
 end
 
--- Agora carrega cada componente usando a função personalizada
 function Deep_Lib:Window(config)
-    local WindowModule = self._loadModule("Window", "src/Components/Window")
+    local WindowModule = self._loadModule("src/Components/Window.lua")
     return WindowModule.new(config)
 end
-
-function Deep_Lib:Notify(config)
-    local NotifyModule = self._loadModule("Notify", "src/Components/Notify")
-    return NotifyModule.new(config)
-end
-
--- Continue adicionando outras funções para Tab, TitleBar, etc.
 
 return Deep_Lib
