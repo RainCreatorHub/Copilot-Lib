@@ -6,25 +6,20 @@ function Window.new(config)
     
     self.Title = config.Title or "Window"
     self.SubTitle = config.SubTitle or ""
-    self.Resizable = config.Resizable or true
+    self.Resizable = config.Resizable or false
     self.Icon = config.Icon or nil
     self.Theme = config.Theme or "Dark"
     self.Tabs = {}
     self.CurrentTab = nil
     self.IsOpen = true
     self.IsMinimized = false
+    self.ActiveDialog = nil -- Controla diálogo ativo
     
-    self:_LoadTheme()
     self:_CreateGUI()
     self:_CreateTitleBar()
     self:_CreateTabBar()
     
     return self
-end
-
-function Window:_LoadTheme()
-    local themeModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Themes/" .. self.Theme .. ".lua"))()
-    self.ThemeData = themeModule
 end
 
 function Window:_CreateGUI()
@@ -36,112 +31,110 @@ function Window:_CreateGUI()
     self.ScreenGui.IgnoreGuiInset = true
     self.ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     
-    -- Main Window Container
+    -- Main Window Container - Tamanho fixo 470x340
     self.MainFrame = Instance.new("Frame")
     self.MainFrame.Name = "MainWindow"
     self.MainFrame.Size = UDim2.new(0, 470, 0, 340)
     self.MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     self.MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-    self.MainFrame.BackgroundColor3 = self.ThemeData.Background
+    self.MainFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
     self.MainFrame.BorderSizePixel = 1
-    self.MainFrame.BorderColor3 = self.ThemeData.Border
+    self.MainFrame.BorderColor3 = Color3.fromRGB(48, 54, 61)
     self.MainFrame.ClipsDescendants = true
     self.MainFrame.Parent = self.ScreenGui
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
+    corner.CornerRadius = UDim.new(0, 12)
     corner.Parent = self.MainFrame
     
-    -- Shadow effect
-    local shadow = Instance.new("ImageLabel")
-    shadow.Name = "Shadow"
-    shadow.Image = "rbxassetid://1316045217"
-    shadow.ImageColor3 = self.ThemeData.Shadow
-    shadow.ImageTransparency = 0.8
-    shadow.ScaleType = Enum.ScaleType.Slice
-    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
-    shadow.Size = UDim2.new(1, 20, 1, 20)
-    shadow.Position = UDim2.new(0, -10, 0, -10)
-    shadow.BackgroundTransparency = 1
-    shadow.Parent = self.MainFrame
-    shadow.ZIndex = 0
+    -- Glow effect
+    local glow = Instance.new("ImageLabel")
+    glow.Name = "Glow"
+    glow.Image = "rbxassetid://8992230675"
+    glow.ImageColor3 = Color3.fromRGB(33, 139, 255)
+    glow.ImageTransparency = 0.8
+    glow.ScaleType = Enum.ScaleType.Slice
+    glow.SliceCenter = Rect.new(23, 23, 277, 277)
+    glow.Size = UDim2.new(1, 24, 1, 24)
+    glow.Position = UDim2.new(0, -12, 0, -12)
+    glow.BackgroundTransparency = 1
+    glow.Parent = self.MainFrame
+    glow.ZIndex = 0
     
-    -- Content area
-    self.ContentFrame = Instance.new("Frame")
+    -- Content area com scroll
+    self.ContentFrame = Instance.new("ScrollingFrame")
     self.ContentFrame.Name = "Content"
-    self.ContentFrame.Size = UDim2.new(1, -130, 1, -60)
-    self.ContentFrame.Position = UDim2.new(0, 130, 0, 60)
+    self.ContentFrame.Size = UDim2.new(1, -150, 1, -70)
+    self.ContentFrame.Position = UDim2.new(0, 140, 0, 60)
     self.ContentFrame.BackgroundTransparency = 1
+    self.ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(48, 54, 61)
+    self.ContentFrame.ScrollBarThickness = 4
+    self.ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    self.ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
     self.ContentFrame.Parent = self.MainFrame
     
-    -- Resize Grip (para redimensionamento)
-    if self.Resizable then
-        self:_CreateResizeGrip()
-    end
+    -- UIListLayout para conteúdo com scroll
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.Padding = UDim.new(0, 8)
+    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    listLayout.Parent = self.ContentFrame
+    
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop = UDim.new(0, 5)
+    padding.PaddingRight = UDim.new(0, 5)
+    padding.PaddingBottom = UDim.new(0, 5)
+    padding.PaddingLeft = UDim.new(0, 5)
+    padding.Parent = self.ContentFrame
+    
+    -- Setup drag functionality
+    self:_SetupDrag()
 end
 
-function Window:_CreateResizeGrip()
-    self.ResizeGrip = Instance.new("TextButton")
-    self.ResizeGrip.Name = "ResizeGrip"
-    self.ResizeGrip.Size = UDim2.new(0, 15, 0, 15)
-    self.ResizeGrip.Position = UDim2.new(1, -15, 1, -15)
-    self.ResizeGrip.BackgroundColor3 = self.ThemeData.Accent
-    self.ResizeGrip.BorderSizePixel = 0
-    self.ResizeGrip.Text = ""
-    self.ResizeGrip.ZIndex = 10
-    self.ResizeGrip.Parent = self.MainFrame
+function Window:_SetupDrag()
+    local UserInputService = game:GetService("UserInputService")
+    local RunService = game:GetService("RunService")
     
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 4)
-    corner.Parent = self.ResizeGrip
-    
-    -- Hover effects
-    self.ResizeGrip.MouseEnter:Connect(function()
-        game:GetService("TweenService"):Create(
-            self.ResizeGrip,
-            TweenInfo.new(0.2),
-            {BackgroundColor3 = self.ThemeData.Accent:Lerp(Color3.new(1,1,1), 0.2)}
-        ):Play()
-    end)
-    
-    self.ResizeGrip.MouseLeave:Connect(function()
-        game:GetService("TweenService"):Create(
-            self.ResizeGrip,
-            TweenInfo.new(0.2),
-            {BackgroundColor3 = self.ThemeData.Accent}
-        ):Play()
-    end)
-    
-    -- Resize functionality
     local dragging = false
-    local dragStart, startSize
+    local dragInput, dragStart, startPos
     
-    self.ResizeGrip.MouseButton1Down:Connect(function(input)
-        dragging = true
-        dragStart = input.Position
-        startSize = self.MainFrame.Size
-        self.ResizeGrip.BackgroundColor3 = self.ThemeData.Accent:Lerp(Color3.new(0,0,0), 0.2)
-    end)
+    local function update(input)
+        local delta = input.Position - dragStart
+        self.MainFrame.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
+        )
+    end
     
-    game:GetService("UserInputService").InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-            game:GetService("TweenService"):Create(
-                self.ResizeGrip,
-                TweenInfo.new(0.2),
-                {BackgroundColor3 = self.ThemeData.Accent}
-            ):Play()
+    -- Input Began no titlebar
+    self.TitleBar.Container.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = self.MainFrame.Position
+            
+            local connection
+            connection = input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                    connection:Disconnect()
+                end
+            end)
         end
     end)
     
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            local newSize = UDim2.new(
-                0, math.max(400, startSize.X.Offset + delta.X),
-                0, math.max(300, startSize.Y.Offset + delta.Y)
-            )
-            self.MainFrame.Size = newSize
+    -- Input Changed
+    self.TitleBar.Container.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    
+    -- Update durante o drag
+    RunService.Heartbeat:Connect(function()
+        if dragging and dragInput then
+            update(dragInput)
         end
     end)
 end
@@ -153,13 +146,11 @@ function Window:_CreateTitleBar()
         SubTitle = self.SubTitle,
         Parent = self.MainFrame,
         OnClose = function()
-            -- Ao invés de fechar diretamente, abrimos um diálogo
             self:CloseDialog()
         end,
         OnMinimize = function()
             self:Minimize()
-        end,
-        Theme = self.ThemeData
+        end
     })
 end
 
@@ -167,38 +158,58 @@ function Window:_CreateTabBar()
     -- Tab Bar Container (lateral esquerdo)
     self.TabBar = Instance.new("Frame")
     self.TabBar.Name = "TabBar"
-    self.TabBar.Size = UDim2.new(0, 120, 1, -60)
+    self.TabBar.Size = UDim2.new(0, 130, 1, -60)
     self.TabBar.Position = UDim2.new(0, 0, 0, 60)
-    self.TabBar.BackgroundColor3 = self.ThemeData.BackgroundTertiary
-    self.TabBar.BorderSizePixel = 1
-    self.TabBar.BorderColor3 = self.ThemeData.Border
+    self.TabBar.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
+    self.TabBar.BorderSizePixel = 0
     self.TabBar.Parent = self.MainFrame
     
-    -- Separator entre tab bar e conteúdo
-    local separator = Instance.new("Frame")
-    separator.Name = "Separator"
-    separator.Size = UDim2.new(0, 1, 1, 0)
-    separator.Position = UDim2.new(1, 0, 0, 0)
-    separator.BackgroundColor3 = self.ThemeData.Border
-    separator.BorderSizePixel = 0
-    separator.Parent = self.TabBar
+    -- Gradiente na tab bar
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(22, 27, 34)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(28, 33, 40))
+    })
+    gradient.Rotation = 90
+    gradient.Parent = self.TabBar
     
     -- Container para os botões das tabs
     self.TabButtonsContainer = Instance.new("Frame")
     self.TabButtonsContainer.Name = "TabButtons"
-    self.TabButtonsContainer.Size = UDim2.new(1, -5, 1, -10)
+    self.TabButtonsContainer.Size = UDim2.new(1, -10, 1, -15)
     self.TabButtonsContainer.Position = UDim2.new(0, 5, 0, 5)
     self.TabButtonsContainer.BackgroundTransparency = 1
     self.TabButtonsContainer.Parent = self.TabBar
     
-    -- UIListLayout para organizar os botões verticalmente
+    -- ScrollingFrame para as tabs
+    self.TabScroll = Instance.new("ScrollingFrame")
+    self.TabScroll.Name = "TabScroll"
+    self.TabScroll.Size = UDim2.new(1, 0, 1, 0)
+    self.TabScroll.BackgroundTransparency = 1
+    self.TabScroll.ScrollBarThickness = 3
+    self.TabScroll.ScrollBarImageColor3 = Color3.fromRGB(48, 54, 61)
+    self.TabScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    self.TabScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    self.TabScroll.Parent = self.TabButtonsContainer
+    
     local listLayout = Instance.new("UIListLayout")
-    listLayout.Padding = UDim.new(0, 3)
+    listLayout.Padding = UDim.new(0, 4)
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    listLayout.Parent = self.TabButtonsContainer
+    listLayout.Parent = self.TabScroll
+    
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop = UDim.new(0, 2)
+    padding.PaddingLeft = UDim.new(0, 2)
+    padding.PaddingRight = UDim.new(0, 2)
+    padding.Parent = self.TabScroll
 end
 
 function Window:CloseDialog()
+    -- Verifica se já existe um diálogo ativo
+    if self.ActiveDialog then
+        return
+    end
+    
     local DialogModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Dialog.lua"))()
     local closeDialog = DialogModule.new({
         Title = "Warn!",
@@ -218,7 +229,7 @@ function Window:CloseDialog()
                 Callback = function()
                     self:Notify({
                         Title = "Canceled.",
-                        Desc = "The hub was not closed.",
+                        Desc = "Operation was canceled.",
                         TimeE = true,
                         Time = 3
                     })
@@ -226,6 +237,8 @@ function Window:CloseDialog()
             }
         }
     }, self)
+    
+    self.ActiveDialog = closeDialog
     closeDialog:Show()
 end
 
@@ -237,14 +250,13 @@ function Window:Minimize()
         self.IsMinimized = false
         self.TitleBar:SetMinimizeState(false)
         
-        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 340)})
         
         sizeTween:Play()
-        sizeTween.Completed:Wait()
-        
         self.ContentFrame.Visible = true
         self.TabBar.Visible = true
+        
     else
         -- Minimizar janela
         self.IsMinimized = true
@@ -253,7 +265,7 @@ function Window:Minimize()
         self.ContentFrame.Visible = false
         self.TabBar.Visible = false
         
-        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 60)})
         sizeTween:Play()
     end
@@ -304,8 +316,10 @@ function Window:Destroy()
         local tweenService = game:GetService("TweenService")
         local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         
-        tweenService:Create(self.MainFrame, tweenInfo, {BackgroundTransparency = 1}):Play()
-        tweenService:Create(self.MainFrame.Shadow, tweenInfo, {ImageTransparency = 1}):Play()
+        tweenService:Create(self.MainFrame, tweenInfo, {
+            Size = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1
+        }):Play()
         
         wait(0.25)
         self.ScreenGui:Destroy()
@@ -320,7 +334,7 @@ function Window:Close()
         local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         
         tweenService:Create(self.MainFrame, tweenInfo, {BackgroundTransparency = 1}):Play()
-        tweenService:Create(self.MainFrame.Shadow, tweenInfo, {ImageTransparency = 1}):Play()
+        tweenService:Create(self.MainFrame.Glow, tweenInfo, {ImageTransparency = 1}):Play()
         
         wait(0.25)
         self.ScreenGui.Enabled = false
@@ -336,10 +350,16 @@ function Window:Open()
         local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         
         self.MainFrame.BackgroundTransparency = 0
-        self.MainFrame.Shadow.ImageTransparency = 0.8
+        self.MainFrame.Glow.ImageTransparency = 0.8
         
+        -- Animação de entrada
         self.MainFrame.Position = UDim2.new(0.5, 0, 0.4, 0)
-        tweenService:Create(self.MainFrame, tweenInfo, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
+        self.MainFrame.Size = UDim2.new(0, 0, 0, 0)
+        
+        tweenService:Create(self.MainFrame, tweenInfo, {
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            Size = UDim2.new(0, 470, 0, 340)
+        }):Play()
         
         self.IsOpen = true
     end
@@ -347,10 +367,9 @@ end
 
 function Window:Tab(tabConfig)
     local TabModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Tab.lua"))()
-    local newTab = TabModule.new(tabConfig, self.ContentFrame, self.TabButtonsContainer, self, self.ThemeData)
+    local newTab = TabModule.new(tabConfig, self.ContentFrame, self.TabScroll, self)
     table.insert(self.Tabs, newTab)
     
-    -- Set as current tab if it's the first one
     if not self.CurrentTab then
         self.CurrentTab = newTab
         newTab:SetVisible(true)
@@ -369,9 +388,20 @@ function Window:Notify(notifyConfig)
 end
 
 function Window:Dialog(dialogConfig)
+    -- Verifica se já existe um diálogo ativo
+    if self.ActiveDialog then
+        return self.ActiveDialog
+    end
+    
     local DialogModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Dialog.lua"))()
     local newDialog = DialogModule.new(dialogConfig, self)
+    self.ActiveDialog = newDialog
     return newDialog
+end
+
+-- Método para limpar diálogo ativo
+function Window:ClearActiveDialog()
+    self.ActiveDialog = nil
 end
 
 -- Método para mudar de tab
