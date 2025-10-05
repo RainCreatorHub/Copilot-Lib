@@ -23,15 +23,21 @@ function Tab:_Create()
     self.Container.Name = "Tab_" .. string.gsub(self.Name, " ", "_")
     self.Container.Size = UDim2.new(1, 0, 1, 0)
     self.Container.Position = UDim2.new(0, 0, 0, 0)
-    self.Container.BackgroundTransparency = 1
+    self.Container.BackgroundColor3 = Color3.fromRGB(25, 30, 35)
+    self.Container.BorderSizePixel = 1
+    self.Container.BorderColor3 = Color3.fromRGB(48, 54, 61)
     self.Container.Visible = false
     self.Container.Parent = self.Parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = self.Container
     
     -- Content area
     self.ContentFrame = Instance.new("Frame")
     self.ContentFrame.Name = "Content"
-    self.ContentFrame.Size = UDim2.new(1, 0, 1, 0)
-    self.ContentFrame.Position = UDim2.new(0, 0, 0, 0)
+    self.ContentFrame.Size = UDim2.new(1, -10, 1, -10)
+    self.ContentFrame.Position = UDim2.new(0, 5, 0, 5)
     self.ContentFrame.BackgroundTransparency = 1
     self.ContentFrame.Parent = self.Container
     
@@ -89,7 +95,7 @@ function Tab:SetVisible(visible)
     self.Container.Visible = visible
 end
 
--- Section Methods
+-- Section Methods (AGORA DE ELEMENTS)
 function Tab:Section(sectionConfig)
     local SectionModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Section.lua"))()
     local newSection = SectionModule.new(sectionConfig, self.ContentFrame)
