@@ -20,7 +20,7 @@ function Section:_Create()
     -- Section container
     self.Container = Instance.new("Frame")
     self.Container.Name = "Section_" .. string.gsub(self.Name, " ", "_")
-    self.Container.Size = UDim2.new(1, 0, 0, 40) -- Height will adjust based on content
+    self.Container.Size = UDim2.new(1, 0, 0, 40)
     self.Container.BackgroundTransparency = 1
     self.Container.LayoutOrder = 999
     self.Container.Parent = self.Parent
@@ -31,7 +31,8 @@ function Section:_Create()
     self.Header.Size = UDim2.new(1, 0, 0, 30)
     self.Header.Position = UDim2.new(0, 0, 0, 0)
     self.Header.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
-    self.Header.BorderSizePixel = 0
+    self.Header.BorderSizePixel = 1
+    self.Header.BorderColor3 = Color3.fromRGB(48, 54, 61)
     self.Header.Text = ""
     self.Header.Parent = self.Container
     
@@ -69,7 +70,7 @@ function Section:_Create()
     self.ExpandIcon.Size = UDim2.new(0, 12, 0, 12)
     self.ExpandIcon.Position = UDim2.new(1, -20, 0.5, -6)
     self.ExpandIcon.BackgroundTransparency = 1
-    self.ExpandIcon.Image = "rbxassetid://10709791981" -- Chevron down icon
+    self.ExpandIcon.Image = "rbxassetid://17739091190"
     self.ExpandIcon.Parent = self.Header
     
     -- Content area
@@ -90,7 +91,7 @@ function Section:_Create()
     -- Update visual state
     self:_UpdateVisualState()
     
-    -- Toggle on click
+    -- Toggle on click with animation
     self.Header.MouseButton1Click:Connect(function()
         if not self.Locked then
             self:SetOpened(not self.Opened)
@@ -99,12 +100,23 @@ function Section:_Create()
 end
 
 function Section:_UpdateVisualState()
-    -- Update expand icon based on opened state
+    local tweenService = game:GetService("TweenService")
+    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    
     if self.Opened then
-        self.ExpandIcon.Image = "rbxassetid://10709791981" -- Chevron down
+        self.ExpandIcon.Image = "rbxassetid://17739091190"
+        tweenService:Create(self.ExpandIcon, tweenInfo, {Rotation = 0}):Play()
+        
+        -- Animate content frame appearance
         self.ContentFrame.Visible = true
+        tweenService:Create(self.ContentFrame, tweenInfo, {Size = UDim2.new(1, -10, 0, self.ContentFrame.UIListLayout.AbsoluteContentSize.Y)}):Play()
     else
-        self.ExpandIcon.Image = "rbxassetid://10709791643" -- Chevron right
+        self.ExpandIcon.Image = "rbxassetid://17739120383"
+        tweenService:Create(self.ExpandIcon, tweenInfo, {Rotation = -90}):Play()
+        
+        -- Animate content frame disappearance
+        tweenService:Create(self.ContentFrame, tweenInfo, {Size = UDim2.new(1, -10, 0, 0)}):Play()
+        wait(0.2)
         self.ContentFrame.Visible = false
     end
     
@@ -131,7 +143,6 @@ function Section:SetIcon(newIcon)
     if self.IconLabel then
         self.IconLabel.Image = newIcon
     elseif newIcon and self.Header then
-        -- Create icon if it doesn't exist but is now provided
         self.IconLabel = Instance.new("ImageLabel")
         self.IconLabel.Name = "Icon"
         self.IconLabel.Size = UDim2.new(0, 16, 0, 16)
@@ -140,7 +151,6 @@ function Section:SetIcon(newIcon)
         self.IconLabel.Image = newIcon
         self.IconLabel.Parent = self.Header
         
-        -- Adjust name label position
         if self.NameLabel then
             self.NameLabel.Position = UDim2.new(0, 30, 0, 0)
             self.NameLabel.Size = UDim2.new(1, -35, 1, 0)
