@@ -91,7 +91,7 @@ end
 
 -- Section Methods
 function Tab:Section(sectionConfig)
-    local SectionModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Section.lua"))()
+    local SectionModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Section.lua"))()
     local newSection = SectionModule.new(sectionConfig, self.ContentFrame)
     table.insert(self.Sections, newSection)
     return newSection
