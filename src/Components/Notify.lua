@@ -1,21 +1,18 @@
--- src/Components/Notify.lua
 local Notify = {}
 Notify.__index = Notify
 
--- Default configuration
 local DEFAULT_CONFIG = {
     Title = "Notification",
     Desc = "",
-    TimeE = true, -- Auto-dismiss enabled by default
-    Time = 5, -- Default display duration
-    Icon = nil, -- No icon by default
-    Options = {} -- No options by default
+    TimeE = true,
+    Time = 5,
+    Icon = nil,
+    Options = {}
 }
 
 function Notify.new(config, parentWindow)
     local self = setmetatable({}, Notify)
     
-    -- Merge provided config with defaults
     self.Config = setmetatable(config or {}, { __index = DEFAULT_CONFIG })
     self.ParentWindow = parentWindow
     self.Gui = nil
@@ -33,22 +30,19 @@ function Notify:_Create()
         return
     end
     
-    -- Create notification container
     self.Gui = Instance.new("Frame")
     self.Gui.Name = "Notification"
-    self.Gui.Size = UDim2.new(0, 300, 0, 80)
-    self.Gui.Position = UDim2.new(1, -320, 1, -100) -- Position in bottom-right corner
-    self.Gui.BackgroundColor3 = Color3.fromRGB(33, 38, 45) -- GitHub dark
+    self.Gui.Size = UDim2.new(0, 300, 0, 120)
+    self.Gui.Position = UDim2.new(1, -320, 1, -150)
+    self.Gui.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
     self.Gui.BorderSizePixel = 0
     self.Gui.Visible = false
     self.Gui.Parent = self.ParentWindow.ScreenGui
     
-    -- UI Corner for rounded corners
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
+    corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = self.Gui
     
-    -- Shadow effect
     local shadow = Instance.new("ImageLabel")
     shadow.Name = "Shadow"
     shadow.Image = "rbxassetid://1316045217"
@@ -62,7 +56,6 @@ function Notify:_Create()
     shadow.Parent = self.Gui
     shadow.ZIndex = 0
     
-    -- Icon (optional)
     if self.Config.Icon then
         local icon = Instance.new("ImageLabel")
         icon.Name = "Icon"
@@ -73,27 +66,25 @@ function Notify:_Create()
         icon.Parent = self.Gui
     end
     
-    -- Title
     local title = Instance.new("TextLabel")
     title.Name = "Title"
     title.Size = UDim2.new(1, self.Config.Icon and -40 or -20, 0, 20)
     title.Position = UDim2.new(0, self.Config.Icon and 40 or 10, 0, 10)
     title.BackgroundTransparency = 1
     title.Text = self.Config.Title
-    title.TextColor3 = Color3.fromRGB(248, 250, 252) -- Light text
+    title.TextColor3 = Color3.fromRGB(248, 250, 252)
     title.TextSize = 14
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Font = Enum.Font.GothamBold
     title.Parent = self.Gui
     
-    -- Description
     local desc = Instance.new("TextLabel")
     desc.Name = "Desc"
-    desc.Size = UDim2.new(1, -20, 1, -40)
+    desc.Size = UDim2.new(1, -20, 0, 40)
     desc.Position = UDim2.new(0, 10, 0, 35)
     desc.BackgroundTransparency = 1
     desc.Text = self.Config.Desc
-    desc.TextColor3 = Color3.fromRGB(139, 148, 160) -- Gray text
+    desc.TextColor3 = Color3.fromRGB(139, 148, 160)
     desc.TextSize = 12
     desc.TextXAlignment = Enum.TextXAlignment.Left
     desc.TextYAlignment = Enum.TextYAlignment.Top
@@ -101,12 +92,10 @@ function Notify:_Create()
     desc.Font = Enum.Font.Gotham
     desc.Parent = self.Gui
     
-    -- Options container
     if #self.Config.Options > 0 then
         self:_CreateOptions()
     end
     
-    -- Progress bar for timed notifications (if TimeE is true)
     if self.Config.TimeE then
         self:_CreateProgressBar()
     end
@@ -127,7 +116,6 @@ function Notify:_CreateOptions()
     listLayout.Padding = UDim.new(0, 5)
     listLayout.Parent = optionsContainer
     
-    -- Create option buttons
     for i, option in ipairs(self.Config.Options) do
         self:_CreateOptionButton(option, optionsContainer, i)
     end
@@ -136,7 +124,7 @@ end
 function Notify:_CreateOptionButton(option, parent, index)
     local button = Instance.new("TextButton")
     button.Name = "Option_" .. index
-    button.Size = UDim2.new(0, 60, 0, 20)
+    button.Size = UDim2.new(0, 70, 0, 22)
     button.BackgroundColor3 = Color3.fromRGB(48, 54, 61)
     button.BorderSizePixel = 0
     button.Text = option.Title
@@ -170,7 +158,7 @@ function Notify:_CreateProgressBar()
     local progressFill = Instance.new("Frame")
     progressFill.Name = "ProgressFill"
     progressFill.Size = UDim2.new(1, 0, 1, 0)
-    progressFill.BackgroundColor3 = Color3.fromRGB(33, 139, 255) -- Blue accent
+    progressFill.BackgroundColor3 = Color3.fromRGB(33, 139, 255)
     progressFill.BorderSizePixel = 0
     progressFill.Parent = progressBar
     
@@ -187,13 +175,11 @@ function Notify:Show()
     self.Active = true
     self.Gui.Visible = true
     
-    -- Animate entrance
-    self.Gui.Position = UDim2.new(1, -320, 1, 100) -- Start off-screen bottom
+    self.Gui.Position = UDim2.new(1, -320, 1, 100)
     local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    local tween = game:GetService("TweenService"):Create(self.Gui, tweenInfo, {Position = UDim2.new(1, -320, 1, -100)})
+    local tween = game:GetService("TweenService"):Create(self.Gui, tweenInfo, {Position = UDim2.new(1, -320, 1, -150)})
     tween:Play()
     
-    -- Handle auto-dismissal
     if self.Config.TimeE then
         self:_StartDismissTimer()
     end
@@ -202,14 +188,12 @@ end
 function Notify:_StartDismissTimer()
     if not self.Config.Time then return end
     
-    -- Animate progress bar if it exists
     if self.ProgressFill then
         local tweenInfo = TweenInfo.new(self.Config.Time, Enum.EasingStyle.Linear)
         local tween = game:GetService("TweenService"):Create(self.ProgressFill, tweenInfo, {Size = UDim2.new(0, 0, 1, 0)})
         tween:Play()
     end
     
-    -- Dismiss after time
     task.delay(self.Config.Time, function()
         if self.Active then
             self:Dismiss()
@@ -222,7 +206,6 @@ function Notify:Dismiss()
     
     self.Active = false
     
-    -- Animate exit
     local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
     local tween = game:GetService("TweenService"):Create(self.Gui, tweenInfo, {Position = UDim2.new(1, -320, 1, 100)})
     tween:Play()
