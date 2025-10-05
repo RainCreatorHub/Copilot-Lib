@@ -10,9 +10,11 @@ function Window.new(config)
     self.CurrentTab = nil
     self.IsOpen = true
     self.IsMinimized = false
+    self.Resizable = config.Resizable or true
     
     self:_CreateGUI()
     self:_CreateTitleBar()
+    self:_CreateTabBar()
     
     return self
 end
@@ -29,7 +31,7 @@ function Window:_CreateGUI()
     -- Main Window Container
     self.MainFrame = Instance.new("Frame")
     self.MainFrame.Name = "MainWindow"
-    self.MainFrame.Size = UDim2.new(0, 470, 0, 340)
+    self.MainFrame.Size = UDim2.new(0, 600, 0, 400) -- Tamanho aumentado para caber tabs lateral
     self.MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     self.MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     self.MainFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
@@ -56,21 +58,84 @@ function Window:_CreateGUI()
     shadow.Parent = self.MainFrame
     shadow.ZIndex = 0
     
-    -- Content area
+    -- Content area (agora menor devido à tab bar lateral)
     self.ContentFrame = Instance.new("Frame")
     self.ContentFrame.Name = "Content"
-    self.ContentFrame.Size = UDim2.new(1, 0, 1, -60)
-    self.ContentFrame.Position = UDim2.new(0, 0, 0, 60)
+    self.ContentFrame.Size = UDim2.new(1, -130, 1, -60) -- Espaço para tab bar lateral
+    self.ContentFrame.Position = UDim2.new(0, 130, 0, 60) -- Começa após a tab bar
     self.ContentFrame.BackgroundTransparency = 1
     self.ContentFrame.Parent = self.MainFrame
     
-    -- Tab container
-    self.TabContainer = Instance.new("Frame")
-    self.TabContainer.Name = "TabContainer"
-    self.TabContainer.Size = UDim2.new(1, -20, 1, -10)
-    self.TabContainer.Position = UDim2.new(0, 10, 0, 5)
-    self.TabContainer.BackgroundTransparency = 1
-    self.TabContainer.Parent = self.ContentFrame
+    -- Resize Grip (para redimensionamento)
+    if self.Resizable then
+        self:_CreateResizeGrip()
+    end
+end
+
+function Window:_CreateResizeGrip()
+    self.ResizeGrip = Instance.new("TextButton")
+    self.ResizeGrip.Name = "ResizeGrip"
+    self.ResizeGrip.Size = UDim2.new(0, 15, 0, 15)
+    self.ResizeGrip.Position = UDim2.new(1, -15, 1, -15)
+    self.ResizeGrip.BackgroundColor3 = Color3.fromRGB(33, 139, 255)
+    self.ResizeGrip.BorderSizePixel = 0
+    self.ResizeGrip.Text = ""
+    self.ResizeGrip.ZIndex = 10
+    self.ResizeGrip.Parent = self.MainFrame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = self.ResizeGrip
+    
+    -- Hover effects
+    self.ResizeGrip.MouseEnter:Connect(function()
+        game:GetService("TweenService"):Create(
+            self.ResizeGrip,
+            TweenInfo.new(0.2),
+            {BackgroundColor3 = Color3.fromRGB(66, 153, 225)}
+        ):Play()
+    end)
+    
+    self.ResizeGrip.MouseLeave:Connect(function()
+        game:GetService("TweenService"):Create(
+            self.ResizeGrip,
+            TweenInfo.new(0.2),
+            {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}
+        ):Play()
+    end)
+    
+    -- Resize functionality
+    local dragging = false
+    local dragStart, startSize
+    
+    self.ResizeGrip.MouseButton1Down:Connect(function(input)
+        dragging = true
+        dragStart = input.Position
+        startSize = self.MainFrame.Size
+        self.ResizeGrip.BackgroundColor3 = Color3.fromRGB(21, 107, 191)
+    end)
+    
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+            game:GetService("TweenService"):Create(
+                self.ResizeGrip,
+                TweenInfo.new(0.2),
+                {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}
+            ):Play()
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            local newSize = UDim2.new(
+                0, math.max(400, startSize.X.Offset + delta.X), -- Mínimo 400 de largura
+                0, math.max(300, startSize.Y.Offset + delta.Y)  -- Mínimo 300 de altura
+            )
+            self.MainFrame.Size = newSize
+        end
+    end)
 end
 
 function Window:_CreateTitleBar()
@@ -88,7 +153,41 @@ function Window:_CreateTitleBar()
     })
 end
 
--- Método Minimize
+function Window:_CreateTabBar()
+    -- Tab Bar Container (lateral esquerdo)
+    self.TabBar = Instance.new("Frame")
+    self.TabBar.Name = "TabBar"
+    self.TabBar.Size = UDim2.new(0, 120, 1, -60) -- Largura fixa, altura até o fim (exceto titlebar)
+    self.TabBar.Position = UDim2.new(0, 0, 0, 60) -- Abaixo da titlebar
+    self.TabBar.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
+    self.TabBar.BorderSizePixel = 1
+    self.TabBar.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    self.TabBar.Parent = self.MainFrame
+    
+    -- Separator entre tab bar e conteúdo
+    local separator = Instance.new("Frame")
+    separator.Name = "Separator"
+    separator.Size = UDim2.new(0, 1, 1, 0)
+    separator.Position = UDim2.new(1, 0, 0, 0)
+    separator.BackgroundColor3 = Color3.fromRGB(48, 54, 61)
+    separator.BorderSizePixel = 0
+    separator.Parent = self.TabBar
+    
+    -- Container para os botões das tabs
+    self.TabButtonsContainer = Instance.new("Frame")
+    self.TabButtonsContainer.Name = "TabButtons"
+    self.TabButtonsContainer.Size = UDim2.new(1, -5, 1, -10)
+    self.TabButtonsContainer.Position = UDim2.new(0, 5, 0, 5)
+    self.TabButtonsContainer.BackgroundTransparency = 1
+    self.TabButtonsContainer.Parent = self.TabBar
+    
+    -- UIListLayout para organizar os botões verticalmente
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.Padding = UDim.new(0, 3)
+    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    listLayout.Parent = self.TabButtonsContainer
+end
+
 function Window:Minimize()
     local tweenService = game:GetService("TweenService")
     
@@ -98,23 +197,23 @@ function Window:Minimize()
         self.TitleBar:SetMinimizeState(false)
         
         local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 340)})
+        local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 600, 0, 400)})
         
-        -- Esperar um pouco antes de mostrar o conteúdo
         sizeTween:Play()
         sizeTween.Completed:Wait()
         
         self.ContentFrame.Visible = true
-        
+        self.TabBar.Visible = true
     else
         -- Minimizar janela
         self.IsMinimized = true
         self.TitleBar:SetMinimizeState(true)
         
         self.ContentFrame.Visible = false
+        self.TabBar.Visible = false
         
         local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 60)})
+        local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 600, 0, 60)})
         sizeTween:Play()
     end
 end
@@ -150,7 +249,7 @@ end
 
 function Window:SetSize(sizeTable)
     if self.MainFrame and type(sizeTable) == "table" and #sizeTable >= 2 then
-        local newSize = UDim2.new(0, sizeTable[1] or 470, 0, sizeTable[2] or 340)
+        local newSize = UDim2.new(0, sizeTable[1] or 600, 0, sizeTable[2] or 400)
         
         local tweenService = game:GetService("TweenService")
         local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -164,7 +263,6 @@ function Window:Destroy()
         local tweenService = game:GetService("TweenService")
         local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         
-        -- Animação de fade out antes de destruir
         tweenService:Create(self.MainFrame, tweenInfo, {BackgroundTransparency = 1}):Play()
         tweenService:Create(self.MainFrame.Shadow, tweenInfo, {ImageTransparency = 1}):Play()
         
@@ -196,11 +294,9 @@ function Window:Open()
         local tweenService = game:GetService("TweenService")
         local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         
-        -- Reset transparency
         self.MainFrame.BackgroundTransparency = 0
         self.MainFrame.Shadow.ImageTransparency = 0.8
         
-        -- Animação de entrada
         self.MainFrame.Position = UDim2.new(0.5, 0, 0.4, 0)
         tweenService:Create(self.MainFrame, tweenInfo, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
         
@@ -210,14 +306,17 @@ end
 
 function Window:Tab(tabConfig)
     local TabModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Tab.lua"))()
-    local newTab = TabModule.new(tabConfig, self.TabContainer)
+    local newTab = TabModule.new(tabConfig, self.ContentFrame, self.TabButtonsContainer, self)
     table.insert(self.Tabs, newTab)
     
+    -- Set as current tab if it's the first one
     if not self.CurrentTab then
         self.CurrentTab = newTab
         newTab:SetVisible(true)
+        newTab:SetActive(true)
     else
         newTab:SetVisible(false)
+        newTab:SetActive(false)
     end
     
     return newTab
@@ -226,6 +325,18 @@ end
 function Window:Notify(notifyConfig)
     local NotifyModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Notify.lua"))()
     return NotifyModule.new(notifyConfig, self)
+end
+
+-- Método para mudar de tab
+function Window:SwitchToTab(tab)
+    if self.CurrentTab then
+        self.CurrentTab:SetVisible(false)
+        self.CurrentTab:SetActive(false)
+    end
+    
+    self.CurrentTab = tab
+    tab:SetVisible(true)
+    tab:SetActive(true)
 end
 
 return Window
