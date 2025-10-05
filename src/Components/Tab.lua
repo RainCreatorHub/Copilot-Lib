@@ -1,7 +1,7 @@
 local Tab = {}
 Tab.__index = Tab
 
-function Tab.new(config, contentParent, tabButtonsParent, window)
+function Tab.new(config, contentParent, tabButtonsParent, window, theme)
     local self = setmetatable({}, Tab)
     
     self.Name = config.Name or "New Tab"
@@ -10,6 +10,15 @@ function Tab.new(config, contentParent, tabButtonsParent, window)
     self.ContentParent = contentParent
     self.TabButtonsParent = tabButtonsParent
     self.Window = window
+    self.Theme = theme or {
+        Background = Color3.fromRGB(33, 38, 45),
+        BackgroundSecondary = Color3.fromRGB(25, 30, 35),
+        BackgroundTertiary = Color3.fromRGB(22, 27, 34),
+        Text = Color3.fromRGB(248, 250, 252),
+        TextSecondary = Color3.fromRGB(139, 148, 160),
+        Accent = Color3.fromRGB(33, 139, 255),
+        Border = Color3.fromRGB(48, 54, 61)
+    }
     self.Visible = false
     self.Active = false
     self.Sections = {}
@@ -26,9 +35,9 @@ function Tab:_Create()
     self.Container.Name = "Tab_" .. string.gsub(self.Name, " ", "_")
     self.Container.Size = UDim2.new(1, 0, 1, 0)
     self.Container.Position = UDim2.new(0, 0, 0, 0)
-    self.Container.BackgroundColor3 = Color3.fromRGB(25, 30, 35)
+    self.Container.BackgroundColor3 = self.Theme.BackgroundSecondary
     self.Container.BorderSizePixel = 1
-    self.Container.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    self.Container.BorderColor3 = self.Theme.Border
     self.Container.Visible = false
     self.Container.Parent = self.ContentParent
     
@@ -58,9 +67,9 @@ function Tab:_CreateTabButton()
     self.TabButton = Instance.new("TextButton")
     self.TabButton.Name = "TabButton_" .. string.gsub(self.Name, " ", "_")
     self.TabButton.Size = UDim2.new(1, 0, 0, 35)
-    self.TabButton.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    self.TabButton.BackgroundColor3 = self.Theme.Background
     self.TabButton.BorderSizePixel = 1
-    self.TabButton.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    self.TabButton.BorderColor3 = self.Theme.Border
     self.TabButton.Text = ""
     self.TabButton.LayoutOrder = #self.TabButtonsParent:GetChildren()
     self.TabButton.Parent = self.TabButtonsParent
@@ -87,7 +96,7 @@ function Tab:_CreateTabButton()
     self.TabNameLabel.Position = UDim2.new(0, self.Icon and 30 or 8, 0, 0)
     self.TabNameLabel.BackgroundTransparency = 1
     self.TabNameLabel.Text = self.Name
-    self.TabNameLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
+    self.TabNameLabel.TextColor3 = self.Theme.TextSecondary
     self.TabNameLabel.TextSize = 12
     self.TabNameLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.TabNameLabel.Font = Enum.Font.Gotham
@@ -117,12 +126,12 @@ function Tab:_SetupTabButtonAnimations()
             tweenService:Create(
                 self.TabButton,
                 TweenInfo.new(0.2),
-                {BackgroundColor3 = Color3.fromRGB(40, 46, 55)}
+                {BackgroundColor3 = self.Theme.Background:Lerp(Color3.new(1,1,1), 0.1)}
             ):Play()
             tweenService:Create(
                 self.TabNameLabel,
                 TweenInfo.new(0.2),
-                {TextColor3 = Color3.fromRGB(248, 250, 252)}
+                {TextColor3 = self.Theme.Text}
             ):Play()
         end
     end)
@@ -132,12 +141,12 @@ function Tab:_SetupTabButtonAnimations()
             tweenService:Create(
                 self.TabButton,
                 TweenInfo.new(0.2),
-                {BackgroundColor3 = Color3.fromRGB(33, 38, 45)}
+                {BackgroundColor3 = self.Theme.Background}
             ):Play()
             tweenService:Create(
                 self.TabNameLabel,
                 TweenInfo.new(0.2),
-                {TextColor3 = Color3.fromRGB(139, 148, 160)}
+                {TextColor3 = self.Theme.TextSecondary}
             ):Play()
         end
     end)
@@ -156,23 +165,23 @@ function Tab:_UpdateActiveAppearance()
         tweenService:Create(
             self.TabButton,
             TweenInfo.new(0.2),
-            {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}
+            {BackgroundColor3 = self.Theme.Accent}
         ):Play()
         tweenService:Create(
             self.TabNameLabel,
             TweenInfo.new(0.2),
-            {TextColor3 = Color3.fromRGB(248, 250, 252)}
+            {TextColor3 = self.Theme.Text}
         ):Play()
     else
         tweenService:Create(
             self.TabButton,
             TweenInfo.new(0.2),
-            {BackgroundColor3 = Color3.fromRGB(33, 38, 45)}
+            {BackgroundColor3 = self.Theme.Background}
         ):Play()
         tweenService:Create(
             self.TabNameLabel,
             TweenInfo.new(0.2),
-            {TextColor3 = Color3.fromRGB(139, 148, 160)}
+            {TextColor3 = self.Theme.TextSecondary}
         ):Play()
     end
 end
@@ -182,8 +191,8 @@ function Tab:_UpdateLockedAppearance()
         if self.LockIcon then
             self.LockIcon.Visible = true
         end
-        self.TabButton.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
-        self.TabNameLabel.TextColor3 = Color3.fromRGB(108, 117, 125)
+        self.TabButton.BackgroundColor3 = self.Theme.BackgroundTertiary
+        self.TabNameLabel.TextColor3 = self.Theme.TextSecondary:Lerp(Color3.new(0,0,0), 0.5)
     else
         if self.LockIcon then
             self.LockIcon.Visible = false
@@ -238,7 +247,7 @@ end
 -- Section Methods
 function Tab:Section(sectionConfig)
     local SectionModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Section.lua"))()
-    local newSection = SectionModule.new(sectionConfig, self.ContentFrame)
+    local newSection = SectionModule.new(sectionConfig, self.ContentFrame, self.Theme)
     table.insert(self.Sections, newSection)
     return newSection
 end
@@ -246,7 +255,7 @@ end
 -- Paragraph Methods
 function Tab:Paragraph(paragraphConfig)
     local ParagraphModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Paragraph.lua"))()
-    local newParagraph = ParagraphModule.new(paragraphConfig, self.ContentFrame)
+    local newParagraph = ParagraphModule.new(paragraphConfig, self.ContentFrame, self.Theme)
     table.insert(self.Elements, newParagraph)
     return newParagraph
 end
@@ -254,7 +263,7 @@ end
 -- Button Methods
 function Tab:Button(buttonConfig)
     local ButtonModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Button.lua"))()
-    local newButton = ButtonModule.new(buttonConfig, self.ContentFrame)
+    local newButton = ButtonModule.new(buttonConfig, self.ContentFrame, self.Theme)
     table.insert(self.Elements, newButton)
     return newButton
 end
