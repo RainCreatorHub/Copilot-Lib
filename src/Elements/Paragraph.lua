@@ -1,12 +1,13 @@
-local Button = {}
-Button.__index = Button
+local Paragraph = {}
+Paragraph.__index = Paragraph
 
-function Button.new(config, parent)
-    local self = setmetatable({}, Button)
+function Paragraph.new(config, parent)
+    local self = setmetatable({}, Paragraph)
     
-    self.Name = config.Name or "Button"
+    self.Name = config.Name or "Paragraph"
     self.Desc = config.Desc or ""
-    self.Callback = config.Callback or function() end
+    self.Icon = config.Icon or nil
+    self.Locked = config.Locked or false
     self.Parent = parent
     
     self:_Create()
@@ -14,126 +15,123 @@ function Button.new(config, parent)
     return self
 end
 
-function Button:_Create()
-    -- Button container
+function Paragraph:_Create()
+    -- Paragraph container
     self.Container = Instance.new("Frame")
-    self.Container.Name = "Button_" .. string.gsub(self.Name, " ", "_")
-    self.Container.Size = UDim2.new(1, 0, 0, 50)
+    self.Container.Name = "Paragraph_" .. string.gsub(self.Name, " ", "_")
+    self.Container.Size = UDim2.new(1, 0, 0, 60)
     self.Container.BackgroundTransparency = 1
     self.Container.LayoutOrder = 999
     self.Container.Parent = self.Parent
     
-    -- Button background
-    self.ButtonFrame = Instance.new("TextButton")
-    self.ButtonFrame.Name = "Button"
-    self.ButtonFrame.Size = UDim2.new(1, 0, 0, 45)
-    self.ButtonFrame.Position = UDim2.new(0, 0, 0, 0)
-    self.ButtonFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
-    self.ButtonFrame.BorderSizePixel = 0
-    self.ButtonFrame.Text = ""
-    self.ButtonFrame.Parent = self.Container
+    -- Background frame
+    self.Background = Instance.new("Frame")
+    self.Background.Name = "Background"
+    self.Background.Size = UDim2.new(1, 0, 0, 55)
+    self.Background.Position = UDim2.new(0, 0, 0, 0)
+    self.Background.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    self.Background.BorderSizePixel = 0
+    self.Background.Parent = self.Container
     
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = self.ButtonFrame
+    corner.Parent = self.Background
     
-    -- Button name
+    -- Icon (if provided)
+    if self.Icon then
+        self.IconLabel = Instance.new("ImageLabel")
+        self.IconLabel.Name = "Icon"
+        self.IconLabel.Size = UDim2.new(0, 20, 0, 20)
+        self.IconLabel.Position = UDim2.new(0, 10, 0, 10)
+        self.IconLabel.BackgroundTransparency = 1
+        self.IconLabel.Image = self.Icon
+        self.IconLabel.Parent = self.Background
+    end
+    
+    -- Paragraph name
     self.NameLabel = Instance.new("TextLabel")
     self.NameLabel.Name = "Name"
-    self.NameLabel.Size = UDim2.new(1, -20, 0, 20)
-    self.NameLabel.Position = UDim2.new(0, 10, 0, 5)
+    self.NameLabel.Size = UDim2.new(1, self.Icon and -35 or -20, 0, 20)
+    self.NameLabel.Position = UDim2.new(0, self.Icon and 35 or 10, 0, 10)
     self.NameLabel.BackgroundTransparency = 1
     self.NameLabel.Text = self.Name
     self.NameLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
     self.NameLabel.TextSize = 14
     self.NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.NameLabel.Font = Enum.Font.GothamBold
-    self.NameLabel.Parent = self.ButtonFrame
+    self.NameLabel.Parent = self.Background
     
-    -- Button description
+    -- Paragraph description
     self.DescLabel = Instance.new("TextLabel")
     self.DescLabel.Name = "Desc"
-    self.DescLabel.Size = UDim2.new(1, -20, 0, 15)
-    self.DescLabel.Position = UDim2.new(0, 10, 0, 25)
+    self.DescLabel.Size = UDim2.new(1, -20, 0, 25)
+    self.DescLabel.Position = UDim2.new(0, 10, 0, 30)
     self.DescLabel.BackgroundTransparency = 1
     self.DescLabel.Text = self.Desc
     self.DescLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
     self.DescLabel.TextSize = 11
     self.DescLabel.TextXAlignment = Enum.TextXAlignment.Left
+    self.DescLabel.TextYAlignment = Enum.TextYAlignment.Top
+    self.DescLabel.TextWrapped = true
     self.DescLabel.Font = Enum.Font.Gotham
-    self.DescLabel.Parent = self.ButtonFrame
+    self.DescLabel.Parent = self.Background
     
-    -- Hover effects
-    self.ButtonFrame.MouseEnter:Connect(function()
-        if not self.Locked then
-            game:GetService("TweenService"):Create(
-                self.ButtonFrame, 
-                TweenInfo.new(0.2), 
-                {BackgroundColor3 = Color3.fromRGB(40, 46, 55)}
-            ):Play()
-        end
-    end)
-    
-    self.ButtonFrame.MouseLeave:Connect(function()
-        if not self.Locked then
-            game:GetService("TweenService"):Create(
-                self.ButtonFrame, 
-                TweenInfo.new(0.2), 
-                {BackgroundColor3 = Color3.fromRGB(33, 38, 45)}
-            ):Play()
-        end
-    end)
-    
-    -- Click event
-    self.ButtonFrame.MouseButton1Click:Connect(function()
-        if not self.Locked then
-            -- Click animation
-            game:GetService("TweenService"):Create(
-                self.ButtonFrame, 
-                TweenInfo.new(0.1), 
-                {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}
-            ):Play()
-            
-            wait(0.1)
-            
-            game:GetService("TweenService"):Create(
-                self.ButtonFrame, 
-                TweenInfo.new(0.1), 
-                {BackgroundColor3 = Color3.fromRGB(33, 38, 45)}
-            ):Play()
-            
-            -- Call callback
-            if self.Callback then
-                self.Callback()
-            end
-        end
-    end)
+    -- Update locked appearance
+    self:_UpdateLockedAppearance()
+end
+
+function Paragraph:_UpdateLockedAppearance()
+    if self.Locked then
+        self.Background.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
+        self.NameLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
+        self.DescLabel.TextColor3 = Color3.fromRGB(108, 117, 125)
+    else
+        self.Background.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+        self.NameLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+        self.DescLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
+    end
 end
 
 -- Public Methods
-function Button:SetName(newName)
+function Paragraph:SetName(newName)
     self.Name = newName
     if self.NameLabel then
         self.NameLabel.Text = newName
     end
 end
 
-function Button:SetDesc(newDesc)
+function Paragraph:SetDesc(newDesc)
     self.Desc = newDesc
     if self.DescLabel then
         self.DescLabel.Text = newDesc
     end
 end
 
-function Button:SetLocked(isLocked)
-    self.Locked = isLocked
-    if self.Locked then
-        self.ButtonFrame.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
-        self.NameLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
-    else
-        self.ButtonFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
-        self.NameLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+function Paragraph:SetIcon(newIcon)
+    self.Icon = newIcon
+    if self.IconLabel then
+        self.IconLabel.Image = newIcon
+    elseif newIcon and self.Background then
+        -- Create icon if it doesn't exist but is now provided
+        self.IconLabel = Instance.new("ImageLabel")
+        self.IconLabel.Name = "Icon"
+        self.IconLabel.Size = UDim2.new(0, 20, 0, 20)
+        self.IconLabel.Position = UDim2.new(0, 10, 0, 10)
+        self.IconLabel.BackgroundTransparency = 1
+        self.IconLabel.Image = newIcon
+        self.IconLabel.Parent = self.Background
+        
+        -- Adjust name label position
+        if self.NameLabel then
+            self.NameLabel.Position = UDim2.new(0, 35, 0, 10)
+            self.NameLabel.Size = UDim2.new(1, -40, 0, 20)
+        end
     end
 end
 
-return Button
+function Paragraph:SetLocked(isLocked)
+    self.Locked = isLocked
+    self:_UpdateLockedAppearance()
+end
+
+return Paragraph
