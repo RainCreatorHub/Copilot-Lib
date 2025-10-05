@@ -8,7 +8,8 @@ function Window.new(config)
     self.SubTitle = config.SubTitle or ""
     self.Tabs = {}
     self.CurrentTab = nil
-    self.IsOpen = true -- Track window state
+    self.IsOpen = true
+    self.IsMinimized = false
     
     self:_CreateGUI()
     self:_CreateTitleBar()
@@ -22,23 +23,21 @@ function Window:_CreateGUI()
     self.ScreenGui.Name = "DeepLibWindow"
     self.ScreenGui.ResetOnSpawn = false
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    -- Use IgnoreGuiInset to have consistent sizing across devices[citation:10]
     self.ScreenGui.IgnoreGuiInset = true
     self.ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     
     -- Main Window Container
     self.MainFrame = Instance.new("Frame")
     self.MainFrame.Name = "MainWindow"
-    self.MainFrame.Size = UDim2.new(0, 470, 0, 340) -- Fixed size as requested
-    -- Center the window using AnchorPoint and Scale[citation:2]
+    self.MainFrame.Size = UDim2.new(0, 470, 0, 340)
     self.MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    self.MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0) -- True center
-    self.MainFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45) -- GitHub dark
-    self.MainFrame.BorderSizePixel = 0
+    self.MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    self.MainFrame.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    self.MainFrame.BorderSizePixel = 1
+    self.MainFrame.BorderColor3 = Color3.fromRGB(48, 54, 61)
     self.MainFrame.ClipsDescendants = true
     self.MainFrame.Parent = self.ScreenGui
     
-    -- Corner rounding
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = self.MainFrame
@@ -57,10 +56,10 @@ function Window:_CreateGUI()
     shadow.Parent = self.MainFrame
     shadow.ZIndex = 0
     
-    -- Content area (below title bar)
+    -- Content area
     self.ContentFrame = Instance.new("Frame")
     self.ContentFrame.Name = "Content"
-    self.ContentFrame.Size = UDim2.new(1, 0, 1, -60) -- Space for title bar
+    self.ContentFrame.Size = UDim2.new(1, 0, 1, -60)
     self.ContentFrame.Position = UDim2.new(0, 0, 0, 60)
     self.ContentFrame.BackgroundTransparency = 1
     self.ContentFrame.Parent = self.MainFrame
@@ -79,11 +78,48 @@ function Window:_CreateTitleBar()
     self.TitleBar = TitleBarModule.new({
         Title = self.Title,
         SubTitle = self.SubTitle,
-        Parent = self.MainFrame
+        Parent = self.MainFrame,
+        OnClose = function()
+            self:Close()
+        end,
+        OnMinimize = function()
+            self:Minimize()
+        end
     })
 end
 
--- Métodos Públicos
+-- Método Minimize
+function Window:Minimize()
+    local tweenService = game:GetService("TweenService")
+    
+    if self.IsMinimized then
+        -- Restaurar janela
+        self.IsMinimized = false
+        self.TitleBar:SetMinimizeState(false)
+        
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 340)})
+        
+        -- Esperar um pouco antes de mostrar o conteúdo
+        sizeTween:Play()
+        sizeTween.Completed:Wait()
+        
+        self.ContentFrame.Visible = true
+        
+    else
+        -- Minimizar janela
+        self.IsMinimized = true
+        self.TitleBar:SetMinimizeState(true)
+        
+        self.ContentFrame.Visible = false
+        
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 60)})
+        sizeTween:Play()
+    end
+end
+
+-- Public Methods
 function Window:SetTitle(newTitle)
     self.Title = newTitle
     if self.TitleBar and self.TitleBar.UpdateTitle then
@@ -99,26 +135,40 @@ function Window:SetSubTitle(newSubTitle)
 end
 
 function Window:SetPos(positionTable)
-    -- positionTable should be {XScale, XOffset, YScale, YOffset}
     if self.MainFrame and type(positionTable) == "table" and #positionTable >= 4 then
         local newPos = UDim2.new(
             positionTable[1] or 0, positionTable[2] or 0,
             positionTable[3] or 0, positionTable[4] or 0
         )
-        self.MainFrame.Position = newPos
+        
+        local tweenService = game:GetService("TweenService")
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = tweenService:Create(self.MainFrame, tweenInfo, {Position = newPos})
+        tween:Play()
     end
 end
 
 function Window:SetSize(sizeTable)
-    -- sizeTable should be {Width, Height} in pixels
     if self.MainFrame and type(sizeTable) == "table" and #sizeTable >= 2 then
         local newSize = UDim2.new(0, sizeTable[1] or 470, 0, sizeTable[2] or 340)
-        self.MainFrame.Size = newSize
+        
+        local tweenService = game:GetService("TweenService")
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = tweenService:Create(self.MainFrame, tweenInfo, {Size = newSize})
+        tween:Play()
     end
 end
 
 function Window:Destroy()
     if self.ScreenGui then
+        local tweenService = game:GetService("TweenService")
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        
+        -- Animação de fade out antes de destruir
+        tweenService:Create(self.MainFrame, tweenInfo, {BackgroundTransparency = 1}):Play()
+        tweenService:Create(self.MainFrame.Shadow, tweenInfo, {ImageTransparency = 1}):Play()
+        
+        wait(0.25)
         self.ScreenGui:Destroy()
         self.ScreenGui = nil
     end
@@ -127,6 +177,13 @@ end
 
 function Window:Close()
     if self.ScreenGui then
+        local tweenService = game:GetService("TweenService")
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        
+        tweenService:Create(self.MainFrame, tweenInfo, {BackgroundTransparency = 1}):Play()
+        tweenService:Create(self.MainFrame.Shadow, tweenInfo, {ImageTransparency = 1}):Play()
+        
+        wait(0.25)
         self.ScreenGui.Enabled = false
         self.IsOpen = false
     end
@@ -135,18 +192,27 @@ end
 function Window:Open()
     if self.ScreenGui then
         self.ScreenGui.Enabled = true
+        
+        local tweenService = game:GetService("TweenService")
+        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        
+        -- Reset transparency
+        self.MainFrame.BackgroundTransparency = 0
+        self.MainFrame.Shadow.ImageTransparency = 0.8
+        
+        -- Animação de entrada
+        self.MainFrame.Position = UDim2.new(0.5, 0, 0.4, 0)
+        tweenService:Create(self.MainFrame, tweenInfo, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
+        
         self.IsOpen = true
     end
 end
-
--- In your existing Window.lua file, update the Tab method:
 
 function Window:Tab(tabConfig)
     local TabModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Tab.lua"))()
     local newTab = TabModule.new(tabConfig, self.TabContainer)
     table.insert(self.Tabs, newTab)
     
-    -- Set as current tab if it's the first one
     if not self.CurrentTab then
         self.CurrentTab = newTab
         newTab:SetVisible(true)
@@ -156,6 +222,7 @@ function Window:Tab(tabConfig)
     
     return newTab
 end
+
 function Window:Notify(notifyConfig)
     local NotifyModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Notify.lua"))()
     return NotifyModule.new(notifyConfig, self)
