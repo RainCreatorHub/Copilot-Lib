@@ -1,8 +1,10 @@
 local Deep_Lib = {}
 
+-- Cache para módulos já carregados
 Deep_Lib._LoadedModules = {}
 Deep_Lib._BaseUrl = "https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/"
 
+-- Função personalizada para carregar módulos do GitHub
 function Deep_Lib._loadModule(modulePath)
     if Deep_Lib._LoadedModules[modulePath] then
         return Deep_Lib._LoadedModules[modulePath]
@@ -22,9 +24,15 @@ function Deep_Lib._loadModule(modulePath)
     return result
 end
 
+-- Função principal para criar janelas
 function Deep_Lib:Window(config)
     local WindowModule = self._loadModule("src/Components/Window.lua")
     return WindowModule.new(config)
+end
+
+-- Função auxiliar para carregar componentes internos
+function Deep_Lib._loadComponent(componentName)
+    return Deep_Lib._loadModule("src/Components/" .. componentName .. ".lua")
 end
 
 return Deep_Lib
