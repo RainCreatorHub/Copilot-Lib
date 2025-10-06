@@ -64,13 +64,13 @@ function Section:_Create()
     self.NameLabel.Font = Enum.Font.Gotham
     self.NameLabel.Parent = self.Header
     
-    -- Expand/collapse icon
+    -- Expand/collapse icon (novo id)
     self.ExpandIcon = Instance.new("ImageLabel")
     self.ExpandIcon.Name = "ExpandIcon"
     self.ExpandIcon.Size = UDim2.new(0, 12, 0, 12)
     self.ExpandIcon.Position = UDim2.new(1, -20, 0.5, -6)
     self.ExpandIcon.BackgroundTransparency = 1
-    self.ExpandIcon.Image = "rbxassetid://120403632100739"
+    self.ExpandIcon.Image = "rbxassetid://120403632100739" -- ← novo asset id
     self.ExpandIcon.Parent = self.Header
     
     -- Content area
@@ -102,25 +102,20 @@ end
 function Section:_UpdateVisualState()
     local tweenService = game:GetService("TweenService")
     local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    
+    local arrowAsset = "rbxassetid://120403632100739"
     if self.Opened then
-        self.ExpandIcon.Image = "rbxassetid://120403632100739"
+        self.ExpandIcon.Image = arrowAsset
         tweenService:Create(self.ExpandIcon, tweenInfo, {Rotation = 0}):Play()
-        
-        -- Animate content frame appearance
         self.ContentFrame.Visible = true
         tweenService:Create(self.ContentFrame, tweenInfo, {Size = UDim2.new(1, -10, 0, self.ContentFrame.UIListLayout.AbsoluteContentSize.Y)}):Play()
     else
-        self.ExpandIcon.Image = "rbxassetid://120403632100739"
+        self.ExpandIcon.Image = arrowAsset
         tweenService:Create(self.ExpandIcon, tweenInfo, {Rotation = -90}):Play()
-        
-        -- Animate content frame disappearance
         tweenService:Create(self.ContentFrame, tweenInfo, {Size = UDim2.new(1, -10, 0, 0)}):Play()
         wait(0.2)
         self.ContentFrame.Visible = false
     end
     
-    -- Update locked appearance
     if self.Locked then
         self.Header.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
         self.NameLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
