@@ -38,7 +38,7 @@ function Dialog:_Create()
     self.Gui = Instance.new("Frame")
     self.Gui.Name = "Dialog"
     self.Gui.Size = UDim2.new(0, 300, 0, 270)
-    self.Gui.Position = UDim2.new(0.5, -150, 0.5, -135) -- Centralizado
+    self.Gui.Position = UDim2.new(0.5, 0, 0.5, 0)
     self.Gui.AnchorPoint = Vector2.new(0.5, 0.5)
     self.Gui.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
     self.Gui.BorderSizePixel = 1
