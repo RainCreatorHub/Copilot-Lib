@@ -25,11 +25,22 @@ function Toggle:_Create(parentFrame)
     self.Container.BackgroundColor3 = Color3.fromRGB(40, 46, 54)
     self.Container.BorderSizePixel = 0
     self.Container.Parent = parentFrame
-    
+
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = self.Container
-    
+
+    -- Invisible button covering the whole toggle for interaction
+    self.InvisibleButton = Instance.new("TextButton")
+    self.InvisibleButton.Name = "InvisibleButton"
+    self.InvisibleButton.Size = UDim2.new(1, 0, 1, 0)
+    self.InvisibleButton.Position = UDim2.new(0, 0, 0, 0)
+    self.InvisibleButton.BackgroundTransparency = 1
+    self.InvisibleButton.Text = ""
+    self.InvisibleButton.AutoButtonColor = false
+    self.InvisibleButton.Parent = self.Container
+    self.InvisibleButton.ZIndex = 100
+
     -- Text Container
     local textContainer = Instance.new("Frame")
     textContainer.Name = "TextContainer"
@@ -37,7 +48,7 @@ function Toggle:_Create(parentFrame)
     textContainer.Position = UDim2.new(0, 10, 0, 0)
     textContainer.BackgroundTransparency = 1
     textContainer.Parent = self.Container
-    
+
     -- Name
     self.NameLabel = Instance.new("TextLabel")
     self.NameLabel.Name = "Name"
@@ -50,7 +61,7 @@ function Toggle:_Create(parentFrame)
     self.NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.NameLabel.Font = Enum.Font.GothamBold
     self.NameLabel.Parent = textContainer
-    
+
     -- Description
     self.DescLabel = Instance.new("TextLabel")
     self.DescLabel.Name = "Desc"
@@ -63,8 +74,8 @@ function Toggle:_Create(parentFrame)
     self.DescLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.DescLabel.Font = Enum.Font.Gotham
     self.DescLabel.Parent = textContainer
-    
-    -- Toggle Switch
+
+    -- Switch visual (all with Frames)
     self.SwitchContainer = Instance.new("Frame")
     self.SwitchContainer.Name = "SwitchContainer"
     self.SwitchContainer.Size = UDim2.new(0, 50, 0, 25)
@@ -73,26 +84,24 @@ function Toggle:_Create(parentFrame)
     self.SwitchContainer.BackgroundColor3 = Color3.fromRGB(48, 54, 61)
     self.SwitchContainer.BorderSizePixel = 0
     self.SwitchContainer.Parent = self.Container
-    
+
     local switchCorner = Instance.new("UICorner")
     switchCorner.CornerRadius = UDim.new(0, 12)
     switchCorner.Parent = self.SwitchContainer
-    
-    -- Toggle Button
-    self.SwitchButton = Instance.new("TextButton")
-    self.SwitchButton.Name = "SwitchButton"
-    self.SwitchButton.Size = UDim2.new(0, 21, 0, 21)
-    self.SwitchButton.Position = UDim2.new(0, 2, 0.5, -10.5)
-    self.SwitchButton.AnchorPoint = Vector2.new(0, 0.5)
-    self.SwitchButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    self.SwitchButton.BorderSizePixel = 0
-    self.SwitchButton.Text = ""
-    self.SwitchButton.Parent = self.SwitchContainer
-    
-    local buttonCorner = Instance.new("UICorner")
-    buttonCorner.CornerRadius = UDim.new(0, 10)
-    buttonCorner.Parent = self.SwitchButton
-    
+
+    self.SwitchKnob = Instance.new("Frame")
+    self.SwitchKnob.Name = "SwitchKnob"
+    self.SwitchKnob.Size = UDim2.new(0, 21, 0, 21)
+    self.SwitchKnob.Position = UDim2.new(0, 2, 0.5, -10.5)
+    self.SwitchKnob.AnchorPoint = Vector2.new(0, 0.5)
+    self.SwitchKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    self.SwitchKnob.BorderSizePixel = 0
+    self.SwitchKnob.Parent = self.SwitchContainer
+
+    local knobCorner = Instance.new("UICorner")
+    knobCorner.CornerRadius = UDim.new(0, 10)
+    knobCorner.Parent = self.SwitchKnob
+
     -- Icon (quando ativo)
     self.IconLabel = Instance.new("ImageLabel")
     self.IconLabel.Name = "Icon"
@@ -102,13 +111,13 @@ function Toggle:_Create(parentFrame)
     self.IconLabel.BackgroundTransparency = 1
     self.IconLabel.Image = self.Icon or ""
     self.IconLabel.Visible = false
-    self.IconLabel.Parent = self.SwitchButton
-    
+    self.IconLabel.Parent = self.SwitchKnob
+
     -- Set initial state
     self:SetValue(self.Default)
-    
-    -- Click event
-    self.SwitchButton.MouseButton1Click:Connect(function()
+
+    -- Click event for invisible button
+    self.InvisibleButton.MouseButton1Click:Connect(function()
         self:SetValue(not self.Value)
     end)
 end
@@ -117,10 +126,10 @@ function Toggle:SetValue(value)
     self.Value = value
     local tweenService = game:GetService("TweenService")
     local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    
+
     if value then
         -- Ativo
-        tweenService:Create(self.SwitchButton, tweenInfo, {
+        tweenService:Create(self.SwitchKnob, tweenInfo, {
             Position = UDim2.new(1, -23, 0.5, -10.5),
             BackgroundColor3 = Color3.fromRGB(33, 139, 255)
         }):Play()
@@ -130,7 +139,7 @@ function Toggle:SetValue(value)
         self.IconLabel.Visible = (self.Icon ~= nil)
     else
         -- Inativo
-        tweenService:Create(self.SwitchButton, tweenInfo, {
+        tweenService:Create(self.SwitchKnob, tweenInfo, {
             Position = UDim2.new(0, 2, 0.5, -10.5),
             BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         }):Play()
@@ -139,7 +148,7 @@ function Toggle:SetValue(value)
         }):Play()
         self.IconLabel.Visible = false
     end
-    
+
     self.Callback(self.Value)
 end
 
