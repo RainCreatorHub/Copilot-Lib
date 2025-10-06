@@ -43,7 +43,7 @@ function Dialog:_Create()
     self.Gui.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
     self.Gui.BorderSizePixel = 1
     self.Gui.BorderColor3 = Color3.fromRGB(48, 54, 61)
-    self.Gui.ZIndex = 16
+    self.Gui.ZIndex = 20
     self.Gui.Visible = false
     self.Gui.Parent = self.Background
     
