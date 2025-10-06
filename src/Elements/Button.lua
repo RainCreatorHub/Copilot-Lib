@@ -1,11 +1,25 @@
+local Icons = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Icons.lua"))()
+local function ResolveIcon(icon)
+    if type(icon) == "number" then
+        return "rbxassetid://" .. icon
+    elseif type(icon) == "string" then
+        if icon:sub(1, 13) == "rbxassetid://" then
+            return icon
+        elseif Icons[icon] then
+            return "rbxassetid://" .. Icons[icon]
+        end
+    end
+    return nil
+end
+
 local Button = {}
 Button.__index = Button
 
 function Button.new(config, parent, theme)
     local self = setmetatable({}, Button)
-    
     self.Name = config.Name or "Button"
     self.Desc = config.Desc or ""
+    self.Icon = config.Icon
     self.Callback = config.Callback or function() end
     self.Parent = parent
     self.Theme = theme or {
@@ -17,22 +31,18 @@ function Button.new(config, parent, theme)
         Border = Color3.fromRGB(48, 54, 61)
     }
     self.Locked = false
-    
     self:_Create()
-    
     return self
 end
 
 function Button:_Create()
-    -- Button container
     self.Container = Instance.new("Frame")
     self.Container.Name = "Button_" .. string.gsub(self.Name, " ", "_")
     self.Container.Size = UDim2.new(1, 0, 0, 50)
     self.Container.BackgroundTransparency = 1
     self.Container.LayoutOrder = 999
     self.Container.Parent = self.Parent
-    
-    -- Button background (COM BORDA)
+
     self.ButtonFrame = Instance.new("TextButton")
     self.ButtonFrame.Name = "Button"
     self.ButtonFrame.Size = UDim2.new(1, 0, 0, 45)
@@ -42,16 +52,25 @@ function Button:_Create()
     self.ButtonFrame.BorderColor3 = self.Theme.Border
     self.ButtonFrame.Text = ""
     self.ButtonFrame.Parent = self.Container
-    
+
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = self.ButtonFrame
-    
-    -- Button name
+
+    if self.Icon then
+        self.IconLabel = Instance.new("ImageLabel")
+        self.IconLabel.Name = "Icon"
+        self.IconLabel.Size = UDim2.new(0, 20, 0, 20)
+        self.IconLabel.Position = UDim2.new(0, 10, 0, 10)
+        self.IconLabel.BackgroundTransparency = 1
+        self.IconLabel.Image = ResolveIcon(self.Icon)
+        self.IconLabel.Parent = self.ButtonFrame
+    end
+
     self.NameLabel = Instance.new("TextLabel")
     self.NameLabel.Name = "Name"
-    self.NameLabel.Size = UDim2.new(1, -20, 0, 20)
-    self.NameLabel.Position = UDim2.new(0, 10, 0, 5)
+    self.NameLabel.Size = UDim2.new(1, self.Icon and -35 or -20, 0, 20)
+    self.NameLabel.Position = UDim2.new(0, self.Icon and 35 or 10, 0, 5)
     self.NameLabel.BackgroundTransparency = 1
     self.NameLabel.Text = self.Name
     self.NameLabel.TextColor3 = self.Theme.Text
@@ -59,8 +78,7 @@ function Button:_Create()
     self.NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.NameLabel.Font = Enum.Font.GothamBold
     self.NameLabel.Parent = self.ButtonFrame
-    
-    -- Button description
+
     self.DescLabel = Instance.new("TextLabel")
     self.DescLabel.Name = "Desc"
     self.DescLabel.Size = UDim2.new(1, -20, 0, 15)
@@ -72,47 +90,40 @@ function Button:_Create()
     self.DescLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.DescLabel.Font = Enum.Font.Gotham
     self.DescLabel.Parent = self.ButtonFrame
-    
-    -- Hover effects
+
     self.ButtonFrame.MouseEnter:Connect(function()
         if not self.Locked then
             game:GetService("TweenService"):Create(
-                self.ButtonFrame, 
-                TweenInfo.new(0.2), 
+                self.ButtonFrame,
+                TweenInfo.new(0.2),
                 {BackgroundColor3 = self.Theme.Background:Lerp(Color3.new(1,1,1), 0.1)}
             ):Play()
         end
     end)
-    
+
     self.ButtonFrame.MouseLeave:Connect(function()
         if not self.Locked then
             game:GetService("TweenService"):Create(
-                self.ButtonFrame, 
-                TweenInfo.new(0.2), 
+                self.ButtonFrame,
+                TweenInfo.new(0.2),
                 {BackgroundColor3 = self.Theme.Background}
             ):Play()
         end
     end)
-    
-    -- Click event
+
     self.ButtonFrame.MouseButton1Click:Connect(function()
         if not self.Locked then
-            -- Click animation
             game:GetService("TweenService"):Create(
-                self.ButtonFrame, 
-                TweenInfo.new(0.1), 
+                self.ButtonFrame,
+                TweenInfo.new(0.1),
                 {BackgroundColor3 = self.Theme.Accent}
             ):Play()
-            
             wait(0.1)
-            
             game:GetService("TweenService"):Create(
-                self.ButtonFrame, 
-                TweenInfo.new(0.1), 
+                self.ButtonFrame,
+                TweenInfo.new(0.1),
                 {BackgroundColor3 = self.Theme.Background}
             ):Play()
-            
-            -- Call callback
             if self.Callback then
                 self.Callback()
             end
@@ -120,7 +131,6 @@ function Button:_Create()
     end)
 end
 
--- Public Methods
 function Button:SetName(newName)
     self.Name = newName
     if self.NameLabel then
@@ -132,6 +142,25 @@ function Button:SetDesc(newDesc)
     self.Desc = newDesc
     if self.DescLabel then
         self.DescLabel.Text = newDesc
+    end
+end
+
+function Button:SetIcon(newIcon)
+    self.Icon = newIcon
+    if self.IconLabel then
+        self.IconLabel.Image = ResolveIcon(newIcon)
+    elseif newIcon and self.ButtonFrame then
+        self.IconLabel = Instance.new("ImageLabel")
+        self.IconLabel.Name = "Icon"
+        self.IconLabel.Size = UDim2.new(0, 20, 0, 20)
+        self.IconLabel.Position = UDim2.new(0, 10, 0, 10)
+        self.IconLabel.BackgroundTransparency = 1
+        self.IconLabel.Image = ResolveIcon(newIcon)
+        self.IconLabel.Parent = self.ButtonFrame
+        if self.NameLabel then
+            self.NameLabel.Position = UDim2.new(0, 35, 0, 5)
+            self.NameLabel.Size = UDim2.new(1, -40, 0, 20)
+        end
     end
 end
 
