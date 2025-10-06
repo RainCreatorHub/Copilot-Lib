@@ -97,7 +97,7 @@ function Toggle:_Create(parentFrame)
     self.SwitchKnob.Name = "SwitchKnob"
     self.SwitchKnob.Size = UDim2.new(0, 20, 0, 20)
     self.SwitchKnob.AnchorPoint = Vector2.new(0, 0.5)
-    self.SwitchKnob.Position = UDim2.new(0, 1, 0.5, 2.3) -- MAIS PARA BAIXO
+    self.SwitchKnob.Position = UDim2.new(0, 1, 0.5, 1.5) -- MAIS PARA BAIXO
     self.SwitchKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     self.SwitchKnob.BorderSizePixel = 0.5
     self.SwitchKnob.Parent = self.SwitchContainer
@@ -135,7 +135,7 @@ function Toggle:SetValue(value)
     if value then
         -- Ativo: knob para direita, knob sempre branca, fundo accent
         tweenService:Create(self.SwitchKnob, tweenInfo, {
-            Position = UDim2.new(1, -21, 0.5, 2), -- MAIS PARA BAIXO
+            Position = UDim2.new(1, -21, 0.5, 1.5), -- MAIS PARA BAIXO
             BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         }):Play()
         tweenService:Create(self.SwitchContainer, tweenInfo, {
