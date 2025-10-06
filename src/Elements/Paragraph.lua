@@ -1,30 +1,39 @@
+local Icons = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Icons.lua"))()
+local function ResolveIcon(icon)
+    if type(icon) == "number" then
+        return "rbxassetid://" .. icon
+    elseif type(icon) == "string" then
+        if icon:sub(1, 13) == "rbxassetid://" then
+            return icon
+        elseif Icons[icon] then
+            return "rbxassetid://" .. Icons[icon]
+        end
+    end
+    return nil
+end
+
 local Paragraph = {}
 Paragraph.__index = Paragraph
 
 function Paragraph.new(config, parent)
     local self = setmetatable({}, Paragraph)
-    
     self.Name = config.Name or "Paragraph"
     self.Desc = config.Desc or ""
     self.Icon = config.Icon or nil
     self.Locked = config.Locked or false
     self.Parent = parent
-    
     self:_Create()
-    
     return self
 end
 
 function Paragraph:_Create()
-    -- Paragraph container
     self.Container = Instance.new("Frame")
     self.Container.Name = "Paragraph_" .. string.gsub(self.Name, " ", "_")
     self.Container.Size = UDim2.new(1, 0, 0, 60)
     self.Container.BackgroundTransparency = 1
     self.Container.LayoutOrder = 999
     self.Container.Parent = self.Parent
-    
-    -- Background frame (COM BORDA)
+
     self.Background = Instance.new("Frame")
     self.Background.Name = "Background"
     self.Background.Size = UDim2.new(1, 0, 0, 55)
@@ -33,23 +42,21 @@ function Paragraph:_Create()
     self.Background.BorderSizePixel = 1
     self.Background.BorderColor3 = Color3.fromRGB(48, 54, 61)
     self.Background.Parent = self.Container
-    
+
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = self.Background
-    
-    -- Icon (if provided) - usando IDs fornecidos
+
     if self.Icon then
         self.IconLabel = Instance.new("ImageLabel")
         self.IconLabel.Name = "Icon"
         self.IconLabel.Size = UDim2.new(0, 20, 0, 20)
         self.IconLabel.Position = UDim2.new(0, 10, 0, 10)
         self.IconLabel.BackgroundTransparency = 1
-        self.IconLabel.Image = self.Icon
+        self.IconLabel.Image = ResolveIcon(self.Icon)
         self.IconLabel.Parent = self.Background
     end
-    
-    -- Paragraph name
+
     self.NameLabel = Instance.new("TextLabel")
     self.NameLabel.Name = "Name"
     self.NameLabel.Size = UDim2.new(1, self.Icon and -35 or -20, 0, 20)
@@ -61,8 +68,7 @@ function Paragraph:_Create()
     self.NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.NameLabel.Font = Enum.Font.GothamBold
     self.NameLabel.Parent = self.Background
-    
-    -- Paragraph description
+
     self.DescLabel = Instance.new("TextLabel")
     self.DescLabel.Name = "Desc"
     self.DescLabel.Size = UDim2.new(1, -20, 0, 25)
@@ -76,8 +82,7 @@ function Paragraph:_Create()
     self.DescLabel.TextWrapped = true
     self.DescLabel.Font = Enum.Font.Gotham
     self.DescLabel.Parent = self.Background
-    
-    -- Update locked appearance
+
     self:_UpdateLockedAppearance()
 end
 
@@ -93,7 +98,6 @@ function Paragraph:_UpdateLockedAppearance()
     end
 end
 
--- Public Methods
 function Paragraph:SetName(newName)
     self.Name = newName
     if self.NameLabel then
@@ -111,18 +115,15 @@ end
 function Paragraph:SetIcon(newIcon)
     self.Icon = newIcon
     if self.IconLabel then
-        self.IconLabel.Image = newIcon
+        self.IconLabel.Image = ResolveIcon(newIcon)
     elseif newIcon and self.Background then
-        -- Create icon if it doesn't exist but is now provided
         self.IconLabel = Instance.new("ImageLabel")
         self.IconLabel.Name = "Icon"
         self.IconLabel.Size = UDim2.new(0, 20, 0, 20)
         self.IconLabel.Position = UDim2.new(0, 10, 0, 10)
         self.IconLabel.BackgroundTransparency = 1
-        self.IconLabel.Image = newIcon
+        self.IconLabel.Image = ResolveIcon(newIcon)
         self.IconLabel.Parent = self.Background
-        
-        -- Adjust name label position
         if self.NameLabel then
             self.NameLabel.Position = UDim2.new(0, 35, 0, 10)
             self.NameLabel.Size = UDim2.new(1, -40, 0, 20)
