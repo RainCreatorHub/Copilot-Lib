@@ -97,7 +97,7 @@ function Toggle:_Create(parentFrame)
     self.SwitchKnob.Name = "SwitchKnob"
     self.SwitchKnob.Size = UDim2.new(0, 20, 0, 20)
     self.SwitchKnob.AnchorPoint = Vector2.new(0, 0.5)
-    self.SwitchKnob.Position = UDim2.new(0, 1, 0.5, 0)
+    self.SwitchKnob.Position = UDim2.new(0, 1, 0.5, 2) -- MAIS PARA BAIXO
     self.SwitchKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     self.SwitchKnob.BorderSizePixel = 0
     self.SwitchKnob.Parent = self.SwitchContainer
@@ -133,19 +133,19 @@ function Toggle:SetValue(value)
     local accent = Color3.fromRGB(33, 139, 255)
 
     if value then
-        -- Ativo: knob para direita, knob cor accent, fundo accent
+        -- Ativo: knob para direita, knob sempre branca, fundo accent
         tweenService:Create(self.SwitchKnob, tweenInfo, {
-            Position = UDim2.new(1, -21, 0.5, 0),
-            BackgroundColor3 = accent
+            Position = UDim2.new(1, -21, 0.5, 2), -- MAIS PARA BAIXO
+            BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         }):Play()
         tweenService:Create(self.SwitchContainer, tweenInfo, {
             BackgroundColor3 = accent:Lerp(Color3.new(1,1,1), 0.2)
         }):Play()
         self.IconLabel.Visible = (self.Icon ~= nil)
     else
-        -- Inativo: knob para esquerda, knob branca, fundo cinza escuro
+        -- Inativo: knob para esquerda, knob sempre branca, fundo cinza escuro
         tweenService:Create(self.SwitchKnob, tweenInfo, {
-            Position = UDim2.new(0, 1, 0.5, 0),
+            Position = UDim2.new(0, 1, 0.5, 2), -- MAIS PARA BAIXO
             BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         }):Play()
         tweenService:Create(self.SwitchContainer, tweenInfo, {
