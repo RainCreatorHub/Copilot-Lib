@@ -37,7 +37,7 @@ function Dialog:_Create()
     -- Main dialog container - Tamanho 300x270, CENTRALIZADO no MainFrame
     self.Gui = Instance.new("Frame")
     self.Gui.Name = "Dialog"
-    self.Gui.Size = UDim2.new(0, 300, 0, 240)
+    self.Gui.Size = UDim2.new(0, 300, 0, 200) -- Altura reduzida
     self.Gui.Position = UDim2.new(0.5, 0, 0.5, 0)
     self.Gui.AnchorPoint = Vector2.new(0.5, 0.5)
     self.Gui.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
@@ -65,10 +65,10 @@ function Dialog:_Create()
     glow.ZIndex = 15
     glow.Parent = self.Gui
     
-    -- Header com gradiente
+    -- Header com gradiente - ALTURA REDUZIDA
     local header = Instance.new("Frame")
     header.Name = "Header"
-    header.Size = UDim2.new(1, 0, 0, 50)
+    header.Size = UDim2.new(1, 0, 0, 30) -- Altura reduzida de 40 para 30
     header.Position = UDim2.new(0, 0, 0, 0)
     header.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
     header.BorderSizePixel = 0
@@ -106,25 +106,25 @@ function Dialog:_Create()
     title.BackgroundTransparency = 1
     title.Text = self.Title
     title.TextColor3 = Color3.fromRGB(248, 250, 252)
-    title.TextSize = 16
+    title.TextSize = 14 -- Texto menor
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Font = Enum.Font.GothamBold
     title.ZIndex = 17
     title.Parent = header
     
-    -- 🔥 CORREÇÃO: Description area com altura fixa e scroll
+    -- Descrição ABAIXO DO TÍTULO
     local descContainer = Instance.new("Frame")
     descContainer.Name = "DescContainer"
-    descContainer.Size = UDim2.new(1, -20, 0, 120) -- Altura fixa
-    descContainer.Position = UDim2.new(0, 10, 0, 60)
+    descContainer.Size = UDim2.new(1, -20, 0, 100) -- Altura ajustada
+    descContainer.Position = UDim2.new(0, 10, 0, 35) -- POSICIONADA ABAIXO DO HEADER
     descContainer.BackgroundTransparency = 1
     descContainer.ZIndex = 16
     descContainer.Parent = self.Gui
     
-    -- 🔥 CORREÇÃO: ScrollingFrame para descrição com altura fixa
+    -- ScrollingFrame para descrição
     local descScroll = Instance.new("ScrollingFrame")
     descScroll.Name = "DescScroll"
-    descScroll.Size = UDim2.new(1, 0, 1, 0) -- Ocupa toda a altura do container
+    descScroll.Size = UDim2.new(1, 0, 1, 0)
     descScroll.Position = UDim2.new(0, 0, 0, 0)
     descScroll.BackgroundTransparency = 1
     descScroll.BorderSizePixel = 0
@@ -135,36 +135,39 @@ function Dialog:_Create()
     descScroll.ZIndex = 16
     descScroll.Parent = descContainer
     
-    -- 🔥 CORREÇÃO: Descrição VISÍVEL com fundo transparente
+    -- Descrição VISÍVEL
     local desc = Instance.new("TextLabel")
     desc.Name = "Desc"
     desc.Size = UDim2.new(1, 0, 0, 0)
     desc.Position = UDim2.new(0, 0, 0, 0)
-    desc.BackgroundTransparency = 1 -- 🔥 TOTALMENTE TRANSPARENTE
+    desc.BackgroundTransparency = 1
     desc.Text = self.Desc
-    desc.TextColor3 = Color3.fromRGB(200, 200, 200) -- 🔥 COR VISÍVEL
-    desc.TextSize = 14
+    desc.TextColor3 = Color3.fromRGB(200, 200, 200)
+    desc.TextSize = 12 -- Texto menor
     desc.TextXAlignment = Enum.TextXAlignment.Left
     desc.TextYAlignment = Enum.TextYAlignment.Top
     desc.TextWrapped = true
     desc.Font = Enum.Font.Gotham
     desc.ZIndex = 16
-    desc.AutomaticSize = Enum.AutomaticSize.Y -- 🔥 Expande automaticamente
+    desc.AutomaticSize = Enum.AutomaticSize.Y
     desc.Parent = descScroll
     
-    -- 🔥 CORREÇÃO: Atualizar CanvasSize quando o texto mudar
+    -- Atualizar CanvasSize quando o texto mudar
     desc:GetPropertyChangedSignal("TextBounds"):Connect(function()
         descScroll.CanvasSize = UDim2.new(0, 0, 0, desc.TextBounds.Y + 10)
     end)
     
     -- Inicializar CanvasSize
-    descScroll.CanvasSize = UDim2.new(0, 0, 0, desc.TextBounds.Y + 10)
+    task.spawn(function()
+        wait(0.1)
+        descScroll.CanvasSize = UDim2.new(0, 0, 0, desc.TextBounds.Y + 10)
+    end)
     
     -- Options container - POSIÇÃO FIXA NA PARTE INFERIOR
     local optionsContainer = Instance.new("Frame")
     optionsContainer.Name = "Options"
     optionsContainer.Size = UDim2.new(1, -20, 0, 40)
-    optionsContainer.Position = UDim2.new(0, 10, 1, -50) -- 🔥 SEMPRE NA PARTE INFERIOR
+    optionsContainer.Position = UDim2.new(0, 10, 1, -50)
     optionsContainer.BackgroundTransparency = 1
     optionsContainer.ZIndex = 16
     optionsContainer.Parent = self.Gui
@@ -239,7 +242,7 @@ function Dialog:Show()
         self.Background.BackgroundTransparency = 0.7
         
         tweenService:Create(self.Gui, tweenInfo, {
-            Size = UDim2.new(0, 300, 0, 240),
+            Size = UDim2.new(0, 300, 0, 200),
             BackgroundTransparency = 0
         }):Play()
     end
