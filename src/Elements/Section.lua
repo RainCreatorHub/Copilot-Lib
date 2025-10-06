@@ -1,6 +1,8 @@
 local Section = {}
 Section.__index = Section
 
+local Arrow = "rbxassetid://133523441229450"
+
 function Section.new(config, parent)
     local self = setmetatable({}, Section)
     
@@ -64,13 +66,13 @@ function Section:_Create()
     self.NameLabel.Font = Enum.Font.Gotham
     self.NameLabel.Parent = self.Header
     
-    -- Expand/collapse icon (novo id)
+    -- Expand/collapse icon (usando variável Arrow)
     self.ExpandIcon = Instance.new("ImageLabel")
     self.ExpandIcon.Name = "ExpandIcon"
     self.ExpandIcon.Size = UDim2.new(0, 12, 0, 12)
     self.ExpandIcon.Position = UDim2.new(1, -20, 0.5, -6)
     self.ExpandIcon.BackgroundTransparency = 1
-    self.ExpandIcon.Image = "rbxassetid://120403632100739" -- ← novo asset id
+    self.ExpandIcon.Image = Arrow
     self.ExpandIcon.Parent = self.Header
     
     -- Content area
@@ -102,14 +104,13 @@ end
 function Section:_UpdateVisualState()
     local tweenService = game:GetService("TweenService")
     local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local arrowAsset = "rbxassetid://120403632100739"
     if self.Opened then
-        self.ExpandIcon.Image = arrowAsset
+        self.ExpandIcon.Image = Arrow
         tweenService:Create(self.ExpandIcon, tweenInfo, {Rotation = 0}):Play()
         self.ContentFrame.Visible = true
         tweenService:Create(self.ContentFrame, tweenInfo, {Size = UDim2.new(1, -10, 0, self.ContentFrame.UIListLayout.AbsoluteContentSize.Y)}):Play()
     else
-        self.ExpandIcon.Image = arrowAsset
+        self.ExpandIcon.Image = Arrow
         tweenService:Create(self.ExpandIcon, tweenInfo, {Rotation = -90}):Play()
         tweenService:Create(self.ContentFrame, tweenInfo, {Size = UDim2.new(1, -10, 0, 0)}):Play()
         wait(0.2)
