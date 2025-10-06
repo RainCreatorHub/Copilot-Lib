@@ -89,15 +89,31 @@ function Window:_CreateGUI()
     padding.PaddingLeft = UDim.new(0, 5)
     padding.Parent = self.ContentFrame
     
-    -- 🔥 NOVO: Container para diálogos (centralizado no window)
+    -- 🔥 CORREÇÃO: Container para diálogos usando o mesmo método do window
     self.DialogContainer = Instance.new("Frame")
     self.DialogContainer.Name = "DialogContainer"
     self.DialogContainer.Size = UDim2.new(1, 0, 1, 0)
     self.DialogContainer.Position = UDim2.new(0, 0, 0, 0)
     self.DialogContainer.BackgroundTransparency = 1
     self.DialogContainer.Visible = false
-    self.DialogContainer.ZIndex = 10
+    self.DialogContainer.ZIndex = 20
     self.DialogContainer.Parent = self.MainFrame
+    
+    -- Overlay escuro para diálogos (mesmo estilo do window)
+    self.DialogOverlay = Instance.new("Frame")
+    self.DialogOverlay.Name = "DialogOverlay"
+    self.DialogOverlay.Size = UDim2.new(1, 0, 1, 0)
+    self.DialogOverlay.Position = UDim2.new(0, 0, 0, 0)
+    self.DialogOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    self.DialogOverlay.BackgroundTransparency = 0.5
+    self.DialogOverlay.BorderSizePixel = 0
+    self.DialogOverlay.ZIndex = 19
+    self.DialogOverlay.Visible = false
+    self.DialogOverlay.Parent = self.MainFrame
+    
+    local overlayCorner = Instance.new("UICorner")
+    overlayCorner.CornerRadius = UDim.new(0, 12)
+    overlayCorner.Parent = self.DialogOverlay
 end
 
 function Window:_SetupDrag()
@@ -287,15 +303,22 @@ function Window:Minimize()
     end
 end
 
--- 🔥 NOVO: Método para obter o container de diálogos
+-- 🔥 CORREÇÃO: Método para obter o container de diálogos
 function Window:GetDialogContainer()
     return self.DialogContainer
 end
 
--- 🔥 NOVO: Método para mostrar/ocultar container de diálogos
+-- 🔥 CORREÇÃO: Método para mostrar/ocultar container de diálogos
 function Window:SetDialogContainerVisible(visible)
-    if self.DialogContainer then
+    if self.DialogContainer and self.DialogOverlay then
         self.DialogContainer.Visible = visible
+        self.DialogOverlay.Visible = visible
+        
+        if visible then
+            -- Garante que o container de diálogo fique acima de tudo
+            self.DialogContainer.ZIndex = 20
+            self.DialogOverlay.ZIndex = 19
+        end
     end
 end
 
@@ -423,9 +446,23 @@ function Window:Dialog(dialogConfig)
     
     local DialogModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Dialog.lua"))()
     
+    -- 🔥 CORREÇÃO: Mostra o container de diálogos antes de criar o diálogo
+    self:SetDialogContainerVisible(true)
+    
     -- 🔥 CORREÇÃO: Passa o container de diálogos para centralizar no window
     local newDialog = DialogModule.new(dialogConfig, self, self.DialogContainer)
     self.ActiveDialog = newDialog
+    
+    -- 🔥 CORREÇÃO: Quando o diálogo fechar, esconde o container
+    if newDialog and newDialog.Close then
+        local originalClose = newDialog.Close
+        newDialog.Close = function(...)
+            self:SetDialogContainerVisible(false)
+            self.ActiveDialog = nil
+            return originalClose(...)
+        end
+    end
+    
     return newDialog
 end
 
