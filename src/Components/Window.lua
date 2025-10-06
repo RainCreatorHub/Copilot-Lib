@@ -88,6 +88,16 @@ function Window:_CreateGUI()
     padding.PaddingBottom = UDim.new(0, 5)
     padding.PaddingLeft = UDim.new(0, 5)
     padding.Parent = self.ContentFrame
+    
+    -- 🔥 NOVO: Container para diálogos (centralizado no window)
+    self.DialogContainer = Instance.new("Frame")
+    self.DialogContainer.Name = "DialogContainer"
+    self.DialogContainer.Size = UDim2.new(1, 0, 1, 0)
+    self.DialogContainer.Position = UDim2.new(0, 0, 0, 0)
+    self.DialogContainer.BackgroundTransparency = 1
+    self.DialogContainer.Visible = false
+    self.DialogContainer.ZIndex = 10
+    self.DialogContainer.Parent = self.MainFrame
 end
 
 function Window:_SetupDrag()
@@ -277,6 +287,18 @@ function Window:Minimize()
     end
 end
 
+-- 🔥 NOVO: Método para obter o container de diálogos
+function Window:GetDialogContainer()
+    return self.DialogContainer
+end
+
+-- 🔥 NOVO: Método para mostrar/ocultar container de diálogos
+function Window:SetDialogContainerVisible(visible)
+    if self.DialogContainer then
+        self.DialogContainer.Visible = visible
+    end
+end
+
 -- Public Methods
 function Window:SetTitle(newTitle)
     self.Title = newTitle
@@ -400,7 +422,9 @@ function Window:Dialog(dialogConfig)
     end
     
     local DialogModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Dialog.lua"))()
-    local newDialog = DialogModule.new(dialogConfig, self)
+    
+    -- 🔥 CORREÇÃO: Passa o container de diálogos para centralizar no window
+    local newDialog = DialogModule.new(dialogConfig, self, self.DialogContainer)
     self.ActiveDialog = newDialog
     return newDialog
 end
@@ -408,6 +432,7 @@ end
 -- Método para limpar diálogo ativo
 function Window:ClearActiveDialog()
     self.ActiveDialog = nil
+    self:SetDialogContainerVisible(false)
 end
 
 -- Método para mudar de tab
