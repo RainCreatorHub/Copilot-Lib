@@ -183,4 +183,10 @@ function Section:Button(buttonConfig)
     return newButton
 end
 
+function Section:Toggle(toggleConfig)
+    local ToggleModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Toggle.lua"))()
+    local newToggle = ToggleModule.new(toggleConfig, self.ContentFrame)
+    return newToggle
+end
+
 return Section
