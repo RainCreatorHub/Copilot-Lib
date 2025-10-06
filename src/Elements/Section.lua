@@ -70,7 +70,7 @@ function Section:_Create()
     self.ExpandIcon.Size = UDim2.new(0, 12, 0, 12)
     self.ExpandIcon.Position = UDim2.new(1, -20, 0.5, -6)
     self.ExpandIcon.BackgroundTransparency = 1
-    self.ExpandIcon.Image = "rbxassetid://17739091190"
+    self.ExpandIcon.Image = "rbxassetid://120403632100739"
     self.ExpandIcon.Parent = self.Header
     
     -- Content area
@@ -104,14 +104,14 @@ function Section:_UpdateVisualState()
     local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     
     if self.Opened then
-        self.ExpandIcon.Image = "rbxassetid://17739091190"
+        self.ExpandIcon.Image = "rbxassetid://120403632100739"
         tweenService:Create(self.ExpandIcon, tweenInfo, {Rotation = 0}):Play()
         
         -- Animate content frame appearance
         self.ContentFrame.Visible = true
         tweenService:Create(self.ContentFrame, tweenInfo, {Size = UDim2.new(1, -10, 0, self.ContentFrame.UIListLayout.AbsoluteContentSize.Y)}):Play()
     else
-        self.ExpandIcon.Image = "rbxassetid://17739120383"
+        self.ExpandIcon.Image = "rbxassetid://120403632100739"
         tweenService:Create(self.ExpandIcon, tweenInfo, {Rotation = -90}):Play()
         
         -- Animate content frame disappearance
