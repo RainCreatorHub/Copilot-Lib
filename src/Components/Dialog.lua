@@ -121,7 +121,7 @@ function Dialog:_Create()
     descContainer.ZIndex = 16
     descContainer.Parent = self.Gui
     
-    -- Description com scroll se necessário
+    -- ScrollingFrame para descrição
     local descScroll = Instance.new("ScrollingFrame")
     descScroll.Name = "DescScroll"
     descScroll.Size = UDim2.new(1, 0, 1, 0)
@@ -129,14 +129,16 @@ function Dialog:_Create()
     descScroll.ScrollBarThickness = 3
     descScroll.ScrollBarImageColor3 = Color3.fromRGB(48, 54, 61)
     descScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-    descScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    descScroll.AutomaticCanvasSize = Enum.AutomaticSize.None -- Desativado
     descScroll.ZIndex = 16
     descScroll.Parent = descContainer
-    
+
+    local TextService = game:GetService("TextService")
     local desc = Instance.new("TextLabel")
     desc.Name = "Desc"
-    desc.Size = UDim2.new(1, 0, 0, 0)
-    desc.BackgroundTransparency = 0.3
+    desc.Size = UDim2.new(1, -10, 0, 0) -- largura com margem, altura dinâmica
+    desc.Position = UDim2.new(0, 5, 0, 0)
+    desc.BackgroundTransparency = 1 -- Corrigido: sem fundo
     desc.Text = self.Desc
     desc.TextColor3 = Color3.fromRGB(139, 148, 160)
     desc.TextSize = 14
@@ -146,11 +148,37 @@ function Dialog:_Create()
     desc.Font = Enum.Font.Gotham
     desc.ZIndex = 16
     desc.Parent = descScroll
-    
-    -- Ajustar tamanho do texto automaticamente
-    desc:GetPropertyChangedSignal("Text"):Connect(function()
-        descScroll.CanvasSize = UDim2.new(0, 0, 0, desc.TextBounds.Y)
+
+    -- Função para atualizar o tamanho do texto e do canvas
+    local function updateDescSize()
+        if desc.Text == "" then
+            desc.Size = UDim2.new(1, -10, 0, 20)
+            descScroll.CanvasSize = UDim2.new(0, 0, 0, 20)
+            return
+        end
+
+        local textSize = TextService:GetTextSize(
+            desc.Text,
+            desc.TextSize,
+            desc.Font,
+            Vector2.new(desc.AbsoluteSize.X, math.huge)
+        )
+        desc.Size = UDim2.new(1, -10, 0, textSize.Y)
+        descScroll.CanvasSize = UDim2.new(0, 0, 0, textSize.Y)
+    end
+
+    -- Atualiza quando o texto muda
+    desc:GetPropertyChangedSignal("Text"):Connect(updateDescSize)
+
+    -- Atualiza quando o container muda de tamanho (ex: janela redimensionada)
+    descContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        if descContainer.AbsoluteSize.X > 0 then
+            updateDescSize()
+        end
     end)
+
+    -- Atualização inicial
+    updateDescSize()
     
     -- Options container
     local optionsContainer = Instance.new("Frame")
@@ -231,7 +259,7 @@ function Dialog:Show()
         self.Background.BackgroundTransparency = 0.7
         
         tweenService:Create(self.Gui, tweenInfo, {
-            Size = UDim2.new(0, 300, 0, 270),
+            Size = UDim2.new(0, 300, 0, 240), -- Corrigido: era 270, mas o frame é 240
             BackgroundTransparency = 0
         }):Play()
     end
