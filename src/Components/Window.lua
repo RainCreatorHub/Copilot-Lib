@@ -93,6 +93,7 @@ function Window:_CreateGUI()
     self.DialogContainer = Instance.new("Frame")
     self.DialogContainer.Name = "DialogContainer"
     self.DialogContainer.Size = UDim2.new(1, 0, 1, 0)
+    self.DialogContainer.AnchorPoint = Vector2.new(0.5, 0.5)
     self.DialogContainer.Position = UDim2.new(0, 0, 0, 0)
     self.DialogContainer.BackgroundTransparency = 1
     self.DialogContainer.Visible = false
