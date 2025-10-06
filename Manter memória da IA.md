@@ -1605,3 +1605,662 @@ end
 
 return Window
 ```
+
+# src/Elements/Toggle.lua
+```lua
+local Toggle = {}
+Toggle.__index = Toggle
+
+function Toggle.new(config, parentFrame)
+    local self = setmetatable({}, Toggle)
+    
+    self.Name = config.Name or "Toggle"
+    self.Desc = config.Desc or ""
+    self.Icon = config.Icon
+    self.Default = config.Default or false
+    self.Callback = config.Callback or function() end
+    self.Value = self.Default
+    
+    self:_Create(parentFrame)
+    
+    return self
+end
+
+function Toggle:_Create(parentFrame)
+    -- Toggle Container
+    self.Container = Instance.new("Frame")
+    self.Container.Name = "Toggle"
+    self.Container.Size = UDim2.new(1, -10, 0, 50)
+    self.Container.Position = UDim2.new(0, 5, 0, 0)
+    self.Container.BackgroundColor3 = Color3.fromRGB(40, 46, 54)
+    self.Container.BorderSizePixel = 0
+    self.Container.Parent = parentFrame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = self.Container
+    
+    -- Text Container
+    local textContainer = Instance.new("Frame")
+    textContainer.Name = "TextContainer"
+    textContainer.Size = UDim2.new(0.7, 0, 1, 0)
+    textContainer.Position = UDim2.new(0, 10, 0, 0)
+    textContainer.BackgroundTransparency = 1
+    textContainer.Parent = self.Container
+    
+    -- Name
+    self.NameLabel = Instance.new("TextLabel")
+    self.NameLabel.Name = "Name"
+    self.NameLabel.Size = UDim2.new(1, 0, 0.6, 0)
+    self.NameLabel.Position = UDim2.new(0, 0, 0, 0)
+    self.NameLabel.BackgroundTransparency = 1
+    self.NameLabel.Text = self.Name
+    self.NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    self.NameLabel.TextSize = 14
+    self.NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    self.NameLabel.Font = Enum.Font.GothamBold
+    self.NameLabel.Parent = textContainer
+    
+    -- Description
+    self.DescLabel = Instance.new("TextLabel")
+    self.DescLabel.Name = "Desc"
+    self.DescLabel.Size = UDim2.new(1, 0, 0.4, 0)
+    self.DescLabel.Position = UDim2.new(0, 0, 0.6, 0)
+    self.DescLabel.BackgroundTransparency = 1
+    self.DescLabel.Text = self.Desc
+    self.DescLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    self.DescLabel.TextSize = 12
+    self.DescLabel.TextXAlignment = Enum.TextXAlignment.Left
+    self.DescLabel.Font = Enum.Font.Gotham
+    self.DescLabel.Parent = textContainer
+    
+    -- Toggle Switch
+    self.SwitchContainer = Instance.new("Frame")
+    self.SwitchContainer.Name = "SwitchContainer"
+    self.SwitchContainer.Size = UDim2.new(0, 50, 0, 25)
+    self.SwitchContainer.Position = UDim2.new(1, -60, 0.5, -12.5)
+    self.SwitchContainer.AnchorPoint = Vector2.new(1, 0.5)
+    self.SwitchContainer.BackgroundColor3 = Color3.fromRGB(48, 54, 61)
+    self.SwitchContainer.BorderSizePixel = 0
+    self.SwitchContainer.Parent = self.Container
+    
+    local switchCorner = Instance.new("UICorner")
+    switchCorner.CornerRadius = UDim.new(0, 12)
+    switchCorner.Parent = self.SwitchContainer
+    
+    -- Toggle Button
+    self.SwitchButton = Instance.new("TextButton")
+    self.SwitchButton.Name = "SwitchButton"
+    self.SwitchButton.Size = UDim2.new(0, 21, 0, 21)
+    self.SwitchButton.Position = UDim2.new(0, 2, 0.5, -10.5)
+    self.SwitchButton.AnchorPoint = Vector2.new(0, 0.5)
+    self.SwitchButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    self.SwitchButton.BorderSizePixel = 0
+    self.SwitchButton.Text = ""
+    self.SwitchButton.Parent = self.SwitchContainer
+    
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 10)
+    buttonCorner.Parent = self.SwitchButton
+    
+    -- Icon (quando ativo)
+    self.IconLabel = Instance.new("ImageLabel")
+    self.IconLabel.Name = "Icon"
+    self.IconLabel.Size = UDim2.new(0, 12, 0, 12)
+    self.IconLabel.Position = UDim2.new(0.5, -6, 0.5, -6)
+    self.IconLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+    self.IconLabel.BackgroundTransparency = 1
+    self.IconLabel.Image = self.Icon or ""
+    self.IconLabel.Visible = false
+    self.IconLabel.Parent = self.SwitchButton
+    
+    -- Set initial state
+    self:SetValue(self.Default)
+    
+    -- Click event
+    self.SwitchButton.MouseButton1Click:Connect(function()
+        self:SetValue(not self.Value)
+    end)
+end
+
+function Toggle:SetValue(value)
+    self.Value = value
+    local tweenService = game:GetService("TweenService")
+    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    
+    if value then
+        -- Ativo
+        tweenService:Create(self.SwitchButton, tweenInfo, {
+            Position = UDim2.new(1, -23, 0.5, -10.5),
+            BackgroundColor3 = Color3.fromRGB(33, 139, 255)
+        }):Play()
+        tweenService:Create(self.SwitchContainer, tweenInfo, {
+            BackgroundColor3 = Color3.fromRGB(33, 139, 255)
+        }):Play()
+        self.IconLabel.Visible = (self.Icon ~= nil)
+    else
+        -- Inativo
+        tweenService:Create(self.SwitchButton, tweenInfo, {
+            Position = UDim2.new(0, 2, 0.5, -10.5),
+            BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        }):Play()
+        tweenService:Create(self.SwitchContainer, tweenInfo, {
+            BackgroundColor3 = Color3.fromRGB(48, 54, 61)
+        }):Play()
+        self.IconLabel.Visible = false
+    end
+    
+    self.Callback(self.Value)
+end
+
+function Toggle:SetName(newName)
+    self.Name = newName
+    self.NameLabel.Text = newName
+end
+
+function Toggle:SetDesc(newDesc)
+    self.Desc = newDesc
+    self.DescLabel.Text = newDesc
+end
+
+function Toggle:SetIcon(icon)
+    self.Icon = icon
+    self.IconLabel.Image = icon
+    if self.Value then
+        self.IconLabel.Visible = true
+    end
+end
+
+return Toggle
+```
+
+# src/Elements/Button.lua
+```lua
+local Button = {}
+Button.__index = Button
+
+function Button.new(config, parent, theme)
+    local self = setmetatable({}, Button)
+    
+    self.Name = config.Name or "Button"
+    self.Desc = config.Desc or ""
+    self.Callback = config.Callback or function() end
+    self.Parent = parent
+    self.Theme = theme or {
+        Background = Color3.fromRGB(33, 38, 45),
+        BackgroundSecondary = Color3.fromRGB(25, 30, 35),
+        Text = Color3.fromRGB(248, 250, 252),
+        TextSecondary = Color3.fromRGB(139, 148, 160),
+        Accent = Color3.fromRGB(33, 139, 255),
+        Border = Color3.fromRGB(48, 54, 61)
+    }
+    self.Locked = false
+    
+    self:_Create()
+    
+    return self
+end
+
+function Button:_Create()
+    -- Button container
+    self.Container = Instance.new("Frame")
+    self.Container.Name = "Button_" .. string.gsub(self.Name, " ", "_")
+    self.Container.Size = UDim2.new(1, 0, 0, 50)
+    self.Container.BackgroundTransparency = 1
+    self.Container.LayoutOrder = 999
+    self.Container.Parent = self.Parent
+    
+    -- Button background (COM BORDA)
+    self.ButtonFrame = Instance.new("TextButton")
+    self.ButtonFrame.Name = "Button"
+    self.ButtonFrame.Size = UDim2.new(1, 0, 0, 45)
+    self.ButtonFrame.Position = UDim2.new(0, 0, 0, 0)
+    self.ButtonFrame.BackgroundColor3 = self.Theme.Background
+    self.ButtonFrame.BorderSizePixel = 1
+    self.ButtonFrame.BorderColor3 = self.Theme.Border
+    self.ButtonFrame.Text = ""
+    self.ButtonFrame.Parent = self.Container
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = self.ButtonFrame
+    
+    -- Button name
+    self.NameLabel = Instance.new("TextLabel")
+    self.NameLabel.Name = "Name"
+    self.NameLabel.Size = UDim2.new(1, -20, 0, 20)
+    self.NameLabel.Position = UDim2.new(0, 10, 0, 5)
+    self.NameLabel.BackgroundTransparency = 1
+    self.NameLabel.Text = self.Name
+    self.NameLabel.TextColor3 = self.Theme.Text
+    self.NameLabel.TextSize = 14
+    self.NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    self.NameLabel.Font = Enum.Font.GothamBold
+    self.NameLabel.Parent = self.ButtonFrame
+    
+    -- Button description
+    self.DescLabel = Instance.new("TextLabel")
+    self.DescLabel.Name = "Desc"
+    self.DescLabel.Size = UDim2.new(1, -20, 0, 15)
+    self.DescLabel.Position = UDim2.new(0, 10, 0, 25)
+    self.DescLabel.BackgroundTransparency = 1
+    self.DescLabel.Text = self.Desc
+    self.DescLabel.TextColor3 = self.Theme.TextSecondary
+    self.DescLabel.TextSize = 11
+    self.DescLabel.TextXAlignment = Enum.TextXAlignment.Left
+    self.DescLabel.Font = Enum.Font.Gotham
+    self.DescLabel.Parent = self.ButtonFrame
+    
+    -- Hover effects
+    self.ButtonFrame.MouseEnter:Connect(function()
+        if not self.Locked then
+            game:GetService("TweenService"):Create(
+                self.ButtonFrame, 
+                TweenInfo.new(0.2), 
+                {BackgroundColor3 = self.Theme.Background:Lerp(Color3.new(1,1,1), 0.1)}
+            ):Play()
+        end
+    end)
+    
+    self.ButtonFrame.MouseLeave:Connect(function()
+        if not self.Locked then
+            game:GetService("TweenService"):Create(
+                self.ButtonFrame, 
+                TweenInfo.new(0.2), 
+                {BackgroundColor3 = self.Theme.Background}
+            ):Play()
+        end
+    end)
+    
+    -- Click event
+    self.ButtonFrame.MouseButton1Click:Connect(function()
+        if not self.Locked then
+            -- Click animation
+            game:GetService("TweenService"):Create(
+                self.ButtonFrame, 
+                TweenInfo.new(0.1), 
+                {BackgroundColor3 = self.Theme.Accent}
+            ):Play()
+            
+            wait(0.1)
+            
+            game:GetService("TweenService"):Create(
+                self.ButtonFrame, 
+                TweenInfo.new(0.1), 
+                {BackgroundColor3 = self.Theme.Background}
+            ):Play()
+            
+            -- Call callback
+            if self.Callback then
+                self.Callback()
+            end
+        end
+    end)
+end
+
+-- Public Methods
+function Button:SetName(newName)
+    self.Name = newName
+    if self.NameLabel then
+        self.NameLabel.Text = newName
+    end
+end
+
+function Button:SetDesc(newDesc)
+    self.Desc = newDesc
+    if self.DescLabel then
+        self.DescLabel.Text = newDesc
+    end
+end
+
+function Button:SetLocked(isLocked)
+    self.Locked = isLocked
+    if self.Locked then
+        self.ButtonFrame.BackgroundColor3 = self.Theme.BackgroundSecondary
+        self.NameLabel.TextColor3 = self.Theme.TextSecondary
+    else
+        self.ButtonFrame.BackgroundColor3 = self.Theme.Background
+        self.NameLabel.TextColor3 = self.Theme.Text
+    end
+end
+
+return Button
+```
+
+# src/Elements/Paragraph.lua
+```lua
+local Paragraph = {}
+Paragraph.__index = Paragraph
+
+function Paragraph.new(config, parent)
+    local self = setmetatable({}, Paragraph)
+    
+    self.Name = config.Name or "Paragraph"
+    self.Desc = config.Desc or ""
+    self.Icon = config.Icon or nil
+    self.Locked = config.Locked or false
+    self.Parent = parent
+    
+    self:_Create()
+    
+    return self
+end
+
+function Paragraph:_Create()
+    -- Paragraph container
+    self.Container = Instance.new("Frame")
+    self.Container.Name = "Paragraph_" .. string.gsub(self.Name, " ", "_")
+    self.Container.Size = UDim2.new(1, 0, 0, 60)
+    self.Container.BackgroundTransparency = 1
+    self.Container.LayoutOrder = 999
+    self.Container.Parent = self.Parent
+    
+    -- Background frame (COM BORDA)
+    self.Background = Instance.new("Frame")
+    self.Background.Name = "Background"
+    self.Background.Size = UDim2.new(1, 0, 0, 55)
+    self.Background.Position = UDim2.new(0, 0, 0, 0)
+    self.Background.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    self.Background.BorderSizePixel = 1
+    self.Background.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    self.Background.Parent = self.Container
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = self.Background
+    
+    -- Icon (if provided) - usando IDs fornecidos
+    if self.Icon then
+        self.IconLabel = Instance.new("ImageLabel")
+        self.IconLabel.Name = "Icon"
+        self.IconLabel.Size = UDim2.new(0, 20, 0, 20)
+        self.IconLabel.Position = UDim2.new(0, 10, 0, 10)
+        self.IconLabel.BackgroundTransparency = 1
+        self.IconLabel.Image = self.Icon
+        self.IconLabel.Parent = self.Background
+    end
+    
+    -- Paragraph name
+    self.NameLabel = Instance.new("TextLabel")
+    self.NameLabel.Name = "Name"
+    self.NameLabel.Size = UDim2.new(1, self.Icon and -35 or -20, 0, 20)
+    self.NameLabel.Position = UDim2.new(0, self.Icon and 35 or 10, 0, 10)
+    self.NameLabel.BackgroundTransparency = 1
+    self.NameLabel.Text = self.Name
+    self.NameLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+    self.NameLabel.TextSize = 14
+    self.NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    self.NameLabel.Font = Enum.Font.GothamBold
+    self.NameLabel.Parent = self.Background
+    
+    -- Paragraph description
+    self.DescLabel = Instance.new("TextLabel")
+    self.DescLabel.Name = "Desc"
+    self.DescLabel.Size = UDim2.new(1, -20, 0, 25)
+    self.DescLabel.Position = UDim2.new(0, 10, 0, 30)
+    self.DescLabel.BackgroundTransparency = 1
+    self.DescLabel.Text = self.Desc
+    self.DescLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
+    self.DescLabel.TextSize = 11
+    self.DescLabel.TextXAlignment = Enum.TextXAlignment.Left
+    self.DescLabel.TextYAlignment = Enum.TextYAlignment.Top
+    self.DescLabel.TextWrapped = true
+    self.DescLabel.Font = Enum.Font.Gotham
+    self.DescLabel.Parent = self.Background
+    
+    -- Update locked appearance
+    self:_UpdateLockedAppearance()
+end
+
+function Paragraph:_UpdateLockedAppearance()
+    if self.Locked then
+        self.Background.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
+        self.NameLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
+        self.DescLabel.TextColor3 = Color3.fromRGB(108, 117, 125)
+    else
+        self.Background.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+        self.NameLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+        self.DescLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
+    end
+end
+
+-- Public Methods
+function Paragraph:SetName(newName)
+    self.Name = newName
+    if self.NameLabel then
+        self.NameLabel.Text = newName
+    end
+end
+
+function Paragraph:SetDesc(newDesc)
+    self.Desc = newDesc
+    if self.DescLabel then
+        self.DescLabel.Text = newDesc
+    end
+end
+
+function Paragraph:SetIcon(newIcon)
+    self.Icon = newIcon
+    if self.IconLabel then
+        self.IconLabel.Image = newIcon
+    elseif newIcon and self.Background then
+        -- Create icon if it doesn't exist but is now provided
+        self.IconLabel = Instance.new("ImageLabel")
+        self.IconLabel.Name = "Icon"
+        self.IconLabel.Size = UDim2.new(0, 20, 0, 20)
+        self.IconLabel.Position = UDim2.new(0, 10, 0, 10)
+        self.IconLabel.BackgroundTransparency = 1
+        self.IconLabel.Image = newIcon
+        self.IconLabel.Parent = self.Background
+        
+        -- Adjust name label position
+        if self.NameLabel then
+            self.NameLabel.Position = UDim2.new(0, 35, 0, 10)
+            self.NameLabel.Size = UDim2.new(1, -40, 0, 20)
+        end
+    end
+end
+
+function Paragraph:SetLocked(isLocked)
+    self.Locked = isLocked
+    self:_UpdateLockedAppearance()
+end
+
+return Paragraph
+```
+
+# src/Elements/Section.lua
+```lua
+local Section = {}
+Section.__index = Section
+
+function Section.new(config, parent)
+    local self = setmetatable({}, Section)
+    
+    self.Name = config.Name or "Section"
+    self.Icon = config.Icon or nil
+    self.Opened = config.Opened or true
+    self.Locked = config.Locked or false
+    self.Parent = parent
+    self.Elements = {}
+    
+    self:_Create()
+    
+    return self
+end
+
+function Section:_Create()
+    -- Section container
+    self.Container = Instance.new("Frame")
+    self.Container.Name = "Section_" .. string.gsub(self.Name, " ", "_")
+    self.Container.Size = UDim2.new(1, 0, 0, 40)
+    self.Container.BackgroundTransparency = 1
+    self.Container.LayoutOrder = 999
+    self.Container.Parent = self.Parent
+    
+    -- Section header (clickable to toggle)
+    self.Header = Instance.new("TextButton")
+    self.Header.Name = "Header"
+    self.Header.Size = UDim2.new(1, 0, 0, 30)
+    self.Header.Position = UDim2.new(0, 0, 0, 0)
+    self.Header.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    self.Header.BorderSizePixel = 1
+    self.Header.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    self.Header.Text = ""
+    self.Header.Parent = self.Container
+    
+    local headerCorner = Instance.new("UICorner")
+    headerCorner.CornerRadius = UDim.new(0, 4)
+    headerCorner.Parent = self.Header
+    
+    -- Icon (if provided)
+    if self.Icon then
+        self.IconLabel = Instance.new("ImageLabel")
+        self.IconLabel.Name = "Icon"
+        self.IconLabel.Size = UDim2.new(0, 16, 0, 16)
+        self.IconLabel.Position = UDim2.new(0, 8, 0.5, -8)
+        self.IconLabel.BackgroundTransparency = 1
+        self.IconLabel.Image = self.Icon
+        self.IconLabel.Parent = self.Header
+    end
+    
+    -- Section name
+    self.NameLabel = Instance.new("TextLabel")
+    self.NameLabel.Name = "Name"
+    self.NameLabel.Size = UDim2.new(1, self.Icon and -30 or -15, 1, 0)
+    self.NameLabel.Position = UDim2.new(0, self.Icon and 30 or 10, 0, 0)
+    self.NameLabel.BackgroundTransparency = 1
+    self.NameLabel.Text = self.Name
+    self.NameLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+    self.NameLabel.TextSize = 14
+    self.NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    self.NameLabel.Font = Enum.Font.Gotham
+    self.NameLabel.Parent = self.Header
+    
+    -- Expand/collapse icon
+    self.ExpandIcon = Instance.new("ImageLabel")
+    self.ExpandIcon.Name = "ExpandIcon"
+    self.ExpandIcon.Size = UDim2.new(0, 12, 0, 12)
+    self.ExpandIcon.Position = UDim2.new(1, -20, 0.5, -6)
+    self.ExpandIcon.BackgroundTransparency = 1
+    self.ExpandIcon.Image = "rbxassetid://17739091190"
+    self.ExpandIcon.Parent = self.Header
+    
+    -- Content area
+    self.ContentFrame = Instance.new("Frame")
+    self.ContentFrame.Name = "Content"
+    self.ContentFrame.Size = UDim2.new(1, -10, 0, 0)
+    self.ContentFrame.Position = UDim2.new(0, 10, 0, 35)
+    self.ContentFrame.BackgroundTransparency = 1
+    self.ContentFrame.Visible = self.Opened
+    self.ContentFrame.Parent = self.Container
+    
+    -- UIListLayout for content
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.Padding = UDim.new(0, 5)
+    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    listLayout.Parent = self.ContentFrame
+    
+    -- Update visual state
+    self:_UpdateVisualState()
+    
+    -- Toggle on click with animation
+    self.Header.MouseButton1Click:Connect(function()
+        if not self.Locked then
+            self:SetOpened(not self.Opened)
+        end
+    end)
+end
+
+function Section:_UpdateVisualState()
+    local tweenService = game:GetService("TweenService")
+    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    
+    if self.Opened then
+        self.ExpandIcon.Image = "rbxassetid://17739091190"
+        tweenService:Create(self.ExpandIcon, tweenInfo, {Rotation = 0}):Play()
+        
+        -- Animate content frame appearance
+        self.ContentFrame.Visible = true
+        tweenService:Create(self.ContentFrame, tweenInfo, {Size = UDim2.new(1, -10, 0, self.ContentFrame.UIListLayout.AbsoluteContentSize.Y)}):Play()
+    else
+        self.ExpandIcon.Image = "rbxassetid://17739120383"
+        tweenService:Create(self.ExpandIcon, tweenInfo, {Rotation = -90}):Play()
+        
+        -- Animate content frame disappearance
+        tweenService:Create(self.ContentFrame, tweenInfo, {Size = UDim2.new(1, -10, 0, 0)}):Play()
+        wait(0.2)
+        self.ContentFrame.Visible = false
+    end
+    
+    -- Update locked appearance
+    if self.Locked then
+        self.Header.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
+        self.NameLabel.TextColor3 = Color3.fromRGB(139, 148, 160)
+    else
+        self.Header.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+        self.NameLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+    end
+end
+
+-- Public Methods
+function Section:SetName(newName)
+    self.Name = newName
+    if self.NameLabel then
+        self.NameLabel.Text = newName
+    end
+end
+
+function Section:SetIcon(newIcon)
+    self.Icon = newIcon
+    if self.IconLabel then
+        self.IconLabel.Image = newIcon
+    elseif newIcon and self.Header then
+        self.IconLabel = Instance.new("ImageLabel")
+        self.IconLabel.Name = "Icon"
+        self.IconLabel.Size = UDim2.new(0, 16, 0, 16)
+        self.IconLabel.Position = UDim2.new(0, 8, 0.5, -8)
+        self.IconLabel.BackgroundTransparency = 1
+        self.IconLabel.Image = newIcon
+        self.IconLabel.Parent = self.Header
+        
+        if self.NameLabel then
+            self.NameLabel.Position = UDim2.new(0, 30, 0, 0)
+            self.NameLabel.Size = UDim2.new(1, -35, 1, 0)
+        end
+    end
+end
+
+function Section:SetOpened(isOpened)
+    self.Opened = isOpened
+    self:_UpdateVisualState()
+end
+
+function Section:SetLocked(isLocked)
+    self.Locked = isLocked
+    self:_UpdateVisualState()
+end
+
+-- Element Methods
+function Section:Paragraph(paragraphConfig)
+    local ParagraphModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Paragraph.lua"))()
+    local newParagraph = ParagraphModule.new(paragraphConfig, self.ContentFrame)
+    table.insert(self.Elements, newParagraph)
+    return newParagraph
+end
+
+function Section:Button(buttonConfig)
+    local ButtonModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Button.lua"))()
+    local newButton = ButtonModule.new(buttonConfig, self.ContentFrame)
+    table.insert(self.Elements, newButton)
+    return newButton
+end
+
+function Section:Toggle(toggleConfig)
+    local ToggleModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Toggle.lua"))()
+    local newToggle = ToggleModule.new(toggleConfig, self.ContentFrame)
+    return newToggle
+end
+
+return Section
+```
