@@ -106,6 +106,177 @@ function Tab:_CreateTabButton()
     self.TabNameLabel.TextXAlignment = Enum.TextXAlignment.Left
     self.TabNameLabel.Font = Enum.Font.Gotham
     self.TabNameLabel.Parent = self.TabButton
+
+    -- Lock icon (se bloqueada)
+    if self.Locked then
+        self.LockIcon = Instance.new("ImageLabel")
+        self.LockIcon.Name = "LockIcon"
+        self.LockIcon.Size = UDim2.new(0, 12, 0, 12)
+        self.LockIcon.Position = UDim2.new(1, -15, 0.5, -6)
+        self.LockIcon.BackgroundTransparency = 1
+        self.LockIcon.Image = "rbxassetid://140204577989343"
+        self.LockIcon.Visible = self.Locked
+        self.LockIcon.Parent = self.TabButton
+    end
+
+    self:_SetupTabButtonAnimations()
+end
+
+function Tab:_SetupTabButtonAnimations()
+    local tweenService = game:GetService("TweenService")
+    self.TabButton.MouseEnter:Connect(function()
+        if not self.Active and not self.Locked then
+            tweenService:Create(
+                self.TabButton,
+                TweenInfo.new(0.2),
+                {BackgroundColor3 = self.Theme.Background:Lerp(Color3.new(1,1,1), 0.1)}
+            ):Play()
+            tweenService:Create(
+                self.TabNameLabel,
+                TweenInfo.new(0.2),
+                {TextColor3 = self.Theme.Text}
+            ):Play()
+        end
+    end)
+    self.TabButton.MouseLeave:Connect(function()
+        if not self.Active and not self.Locked then
+            tweenService:Create(
+                self.TabButton,
+                TweenInfo.new(0.2),
+                {BackgroundColor3 = self.Theme.Background}
+            ):Play()
+            tweenService:Create(
+                self.TabNameLabel,
+                TweenInfo.new(0.2),
+                {TextColor3 = self.Theme.TextSecondary}
+            ):Play()
+        end
+    end)
+    self.TabButton.MouseButton1Click:Connect(function()
+        if not self.Locked then
+            if self.Window and self.Window.SwitchToTab then
+                self.Window:SwitchToTab(self)
+            end
+        end
+    end)
+end
+
+function Tab:_UpdateActiveAppearance()
+    local tweenService = game:GetService("TweenService")
+    if self.Active then
+        tweenService:Create(
+            self.TabButton,
+            TweenInfo.new(0.2),
+            {BackgroundColor3 = self.Theme.Accent}
+        ):Play()
+        tweenService:Create(
+            self.TabNameLabel,
+            TweenInfo.new(0.2),
+            {TextColor3 = self.Theme.Text}
+        ):Play()
+    else
+        tweenService:Create(
+            self.TabButton,
+            TweenInfo.new(0.2),
+            {BackgroundColor3 = self.Theme.Background}
+        ):Play()
+        tweenService:Create(
+            self.TabNameLabel,
+            TweenInfo.new(0.2),
+            {TextColor3 = self.Theme.TextSecondary}
+        ):Play()
+    end
+end
+
+function Tab:_UpdateLockedAppearance()
+    if self.Locked then
+        if self.LockIcon then
+            self.LockIcon.Visible = true
+        end
+        self.TabButton.BackgroundColor3 = self.Theme.BackgroundTertiary
+        self.TabNameLabel.TextColor3 = self.Theme.TextSecondary:Lerp(Color3.new(0,0,0), 0.5)
+    else
+        if self.LockIcon then
+            self.LockIcon.Visible = false
+        end
+        self:_UpdateActiveAppearance()
+    end
+end
+
+function Tab:SetName(newName)
+    self.Name = newName
+    if self.TabNameLabel then
+        self.TabNameLabel.Text = newName
+    end
+end
+
+function Tab:SetIcon(newIcon)
+    self.Icon = newIcon
+    if self.TabIcon then
+        self.TabIcon.Image = ResolveIcon(newIcon)
+    elseif newIcon and self.TabButton then
+        self.TabIcon = Instance.new("ImageLabel")
+        self.TabIcon.Name = "Icon"
+        self.TabIcon.Size = UDim2.new(0, 20, 0, 20)
+        self.TabIcon.Position = UDim2.new(0, 8, 0.5, -10)
+        self.TabIcon.BackgroundTransparency = 1
+        self.TabIcon.Image = ResolveIcon(newIcon)
+        self.TabIcon.Parent = self.TabButton
+        if self.TabNameLabel then
+            self.TabNameLabel.Position = UDim2.new(0, 30, 0, 0)
+            self.TabNameLabel.Size = UDim2.new(1, -35, 1, 0)
+        end
+    end
+end
+
+function Tab:SetLocked(isLocked)
+    self.Locked = isLocked
+    self:_UpdateLockedAppearance()
+end
+
+function Tab:SetVisible(visible)
+    self.Visible = visible
+    self.Container.Visible = visible
+end
+
+function Tab:SetActive(active)
+    self.Active = active
+    self:_UpdateActiveAppearance()
+end
+
+function Tab:Section(sectionConfig)
+    local SectionModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Section.lua"))()
+    local newSection = SectionModule.new(sectionConfig, self.ContentFrame, self.Theme)
+    table.insert(self.Sections, newSection)
+    return newSection
+end
+
+function Tab:Paragraph(paragraphConfig)
+    local ParagraphModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Paragraph.lua"))()
+    local newParagraph = ParagraphModule.new(paragraphConfig, self.ContentFrame, self.Theme)
+    table.insert(self.Elements, newParagraph)
+    return newParagraph
+end
+
+function Tab:Button(buttonConfig)
+    local ButtonModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Button.lua"))()
+    local newButton = ButtonModule.new(buttonConfig, self.ContentFrame, self.Theme)
+    table.insert(self.Elements, newButton)
+    return newButton
+end
+
+function Tab:Toggle(toggleConfig)
+    local ToggleModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Toggle.lua"))()
+    local newToggle = ToggleModule.new(toggleConfig, self.ContentFrame)
+    table.insert(self.Elements, newToggle)
+    return newToggle
+end
+
+function Tab:Dropdown(dropdownConfig)
+    local DropdownModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Dropdown.lua"))()
+    local newDropdown = DropdownModule.new(dropdownConfig, self.ContentFrame)
+    table.insert(self.Elements, newDropdown)
+    return newDropdown
 end
 
 return Tab
