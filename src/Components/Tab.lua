@@ -268,4 +268,11 @@ function Tab:Button(buttonConfig)
     return newButton
 end
 
+function Section:Dropdown(dropdownConfig)
+    local DropdownModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Dropdown.lua"))()
+    local newDropdown = DropdownModule.new(dropdownConfig, self.ContentFrame)
+    table.insert(self.Elements, newDropdown)
+    return newDropdown
+end
+
 return Tab
