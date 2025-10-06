@@ -145,7 +145,7 @@ function Toggle:SetValue(value)
     else
         -- Inativo: knob para esquerda, knob sempre branca, fundo cinza escuro
         tweenService:Create(self.SwitchKnob, tweenInfo, {
-            Position = UDim2.new(0, 1, 0.5, 2), -- MAIS PARA BAIXO
+            Position = UDim2.new(0, 1, 0.5, 1.5), -- MAIS PARA BAIXO
             BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         }):Play()
         tweenService:Create(self.SwitchContainer, tweenInfo, {
