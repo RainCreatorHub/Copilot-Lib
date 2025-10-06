@@ -268,6 +268,12 @@ function Tab:Button(buttonConfig)
     return newButton
 end
 
+function Tab:Toggle(toggleConfig)
+    local ToggleModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Toggle.lua"))()
+    local newToggle = ToggleModule.new(toggleConfig, self.ContentFrame, self.Theme)
+    return newToggle
+end
+
 function Tab:Dropdown(dropdownConfig)
     local DropdownModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Elements/Dropdown.lua"))()
     local newDropdown = DropdownModule.new(dropdownConfig, self.ContentFrame, self.Theme)
