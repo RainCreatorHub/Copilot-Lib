@@ -127,7 +127,8 @@ D:SetMulti(true)
 ---
 
 ## 💬 Notify
-
+{ `Incomplete.` }
+{ `Please use the button` }
 ```lua
 window:Notify({
     Title = "Bem-vindo!",
