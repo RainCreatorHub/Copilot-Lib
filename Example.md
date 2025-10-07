@@ -128,6 +128,7 @@ D:SetMulti(true)
 
 ## 💬 Notify
 { `Incomplete.` }
+
 { `Please use the button` }
 ```lua
 window:Notify({
