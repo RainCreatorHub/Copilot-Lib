@@ -100,7 +100,8 @@ section:Toggle({
 
 ---
 
-## ⬇️ Dropdown
+## ⬇️ Dropdown 
+{ `Incomplete.` }
 
 ```lua
 local D = section:Dropdown({
@@ -211,6 +212,7 @@ section:Toggle({
     end
 })
 
+--[[
 local D = section:Dropdown({
     Name = "Escolha algo",
     Desc = "Dropdown multi-uso",
@@ -228,7 +230,7 @@ D:SetOptions({"A", "B", "C"})
 D:Refresh()
 D:SetDefalth("B")
 D:SetMulti(true)
-
+]]
 window:Notify({
     Title = "Notificação Inicial",
     Desc = "Tudo pronto para usar Deep-Lib!",
