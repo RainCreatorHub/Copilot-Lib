@@ -103,6 +103,7 @@ section:Toggle({
 ## ⬇️ Dropdown 
 { `Incomplete.` }
 
+{ `Do not use` }
 ```lua
 local D = section:Dropdown({
     Name = "Escolha algo",
