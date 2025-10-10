@@ -1,3 +1,4 @@
+-- TitleBar.lua
 local TitleBar = {}
 TitleBar.__index = TitleBar
 
