@@ -1,4 +1,6 @@
--- Window.lua
+-- Window.lua - Deep_Lib Component
+-- Código Completo com Sistema de Key
+
 local Window = {}
 Window.__index = Window
 
@@ -146,9 +148,7 @@ function Window:_ShowKeySystem()
                 setclipboard(self.KeyS.Url)
                 self:Notify({
                     Title = "URL Copied!",
-                    Desc = "Key URL has been copied to clipboard",
-                    TimeE = true,
-                    Time = 3
+                    Desc = "Key URL has been copied to clipboard"
                 })
             end
             
@@ -256,9 +256,7 @@ function Window:_ShowKeySystem()
             
             self:Notify({
                 Title = "Access Granted!",
-                Desc = "Welcome to the hub!",
-                TimeE = true,
-                Time = 3
+                Desc = "Welcome to the hub!"
             })
         else
             statusLabel.Text = "Invalid key! Please try again"
@@ -294,14 +292,13 @@ function Window:_InitializeWindow()
 end
 
 function Window:_CreateGUI()
-    local Player = game:GetService("Players").LocalPlayer
     -- Main ScreenGui
     self.ScreenGui = Instance.new("ScreenGui")
     self.ScreenGui.Name = "DeepLibWindow"
     self.ScreenGui.ResetOnSpawn = false
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     self.ScreenGui.IgnoreGuiInset = true
-    self.ScreenGui.Parent = Player.PlayerGui
+    self.ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     
     -- Main Window Container
     self.MainFrame = Instance.new("Frame")
@@ -450,6 +447,21 @@ function Window:_CreateTitleBar()
             self:Minimize()
         end
     })
+    
+    -- Container para botões customizados do MinB
+    self.CustomButtonsContainer = Instance.new("Frame")
+    self.CustomButtonsContainer.Name = "CustomButtons"
+    self.CustomButtonsContainer.Size = UDim2.new(0, 0, 1, 0)
+    self.CustomButtonsContainer.Position = UDim2.new(1, -130, 0, 0)
+    self.CustomButtonsContainer.BackgroundTransparency = 1
+    self.CustomButtonsContainer.Parent = self.TitleBar.Container
+    
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.FillDirection = Enum.FillDirection.Horizontal
+    listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    listLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    listLayout.Padding = UDim.new(0, 5)
+    listLayout.Parent = self.CustomButtonsContainer
 end
 
 function Window:_CreateTabBar()
@@ -522,9 +534,7 @@ function Window:CloseDialog()
                 Callback = function()
                     self:Notify({
                         Title = "Canceled.",
-                        Desc = "Operation was canceled.",
-                        TimeE = true,
-                        Time = 3
+                        Desc = "Operation was canceled."
                     })
                 end
             }
@@ -679,6 +689,11 @@ function Window:Open()
 end
 
 function Window:Tab(tabConfig)
+    -- Cria ContentFrame se não existir (caso venha do sistema de Key)
+    if not self.ContentFrame then
+        self:_CreateContentArea()
+    end
+    
     local TabModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Tab.lua"))()
     local newTab = TabModule.new(tabConfig, self.ContentFrame, self.TabScroll, self)
     table.insert(self.Tabs, newTab)
@@ -729,15 +744,142 @@ function Window:ClearActiveDialog()
     self:SetDialogContainerVisible(false)
 end
 
-function Window:SwitchToTab(tab)
-    if self.CurrentTab then
-        self.CurrentTab:SetVisible(false)
-        self.CurrentTab:SetActive(false)
+function Window:MinB(config)
+    if not self.TitleBar or not self.CustomButtonsContainer then
+        warn("⚠️ TitleBar não está inicializado. Chame este método após criar a window.")
+        return
     end
     
-    self.CurrentTab = tab
-    tab:SetVisible(true)
-    tab:SetActive(true)
+    local buttonConfig = config or {}
+    local buttonSize = buttonConfig.Size or 25
+    local hasBorder = buttonConfig.Border ~= false -- Default true
+    local borderRadius = buttonConfig.BorderRadius or 4
+    local buttonImage = buttonConfig.Image or nil
+    
+    -- Cria o botão MinB
+    local minBButton = Instance.new("TextButton")
+    minBButton.Name = "MinBButton"
+    minBButton.Size = UDim2.new(0, buttonSize, 0, buttonSize)
+    minBButton.BackgroundColor3 = Color3.fromRGB(33, 139, 255)
+    minBButton.BorderSizePixel = 0
+    minBButton.Text = buttonImage and "" or "▬"
+    minBButton.TextColor3 = Color3.fromRGB(248, 250, 252)
+    minBButton.TextSize = 14
+    minBButton.Font = Enum.Font.GothamBold
+    minBButton.AutoButtonColor = false
+    minBButton.ZIndex = 10
+    minBButton.Parent = self.CustomButtonsContainer
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, borderRadius)
+    btnCorner.Parent = minBButton
+    
+    -- Borda (se ativada)
+    if hasBorder then
+        local btnStroke = Instance.new("UIStroke")
+        btnStroke.Color = Color3.fromRGB(48, 54, 61)
+        btnStroke.Thickness = 1
+        btnStroke.Parent = minBButton
+    end
+    
+    -- Imagem (se fornecida)
+    if buttonImage then
+        local btnImage = Instance.new("ImageLabel")
+        btnImage.Name = "ButtonImage"
+        btnImage.Size = UDim2.new(0, buttonSize - 8, 0, buttonSize - 8)
+        btnImage.Position = UDim2.new(0.5, 0, 0.5, 0)
+        btnImage.AnchorPoint = Vector2.new(0.5, 0.5)
+        btnImage.BackgroundTransparency = 1
+        btnImage.Image = type(buttonImage) == "number" and "rbxassetid://" .. buttonImage or buttonImage
+        btnImage.ImageColor3 = Color3.fromRGB(248, 250, 252)
+        btnImage.Parent = minBButton
+    end
+    
+    -- Estado do MinB
+    local isMinBActive = false
+    
+    -- Animações do botão
+    local tweenService = game:GetService("TweenService")
+    
+    minBButton.MouseEnter:Connect(function()
+        tweenService:Create(
+            minBButton,
+            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundColor3 = Color3.fromRGB(50, 156, 255)}
+        ):Play()
+    end)
+    
+    minBButton.MouseLeave:Connect(function()
+        tweenService:Create(
+            minBButton,
+            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}
+        ):Play()
+    end)
+    
+    minBButton.MouseButton1Down:Connect(function()
+        tweenService:Create(
+            minBButton,
+            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundColor3 = Color3.fromRGB(20, 100, 200)}
+        ):Play()
+    end)
+    
+    minBButton.MouseButton1Up:Connect(function()
+        tweenService:Create(
+            minBButton,
+            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundColor3 = Color3.fromRGB(50, 156, 255)}
+        ):Play()
+    end)
+    
+    -- Funcionalidade do MinB
+    minBButton.MouseButton1Click:Connect(function()
+        if isMinBActive then
+            -- Restaura a janela completa
+            isMinBActive = false
+            
+            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 340)}):Play()
+            
+            if self.ContentFrame then
+                self.ContentFrame.Visible = true
+            end
+            if self.TabBar then
+                self.TabBar.Visible = true
+            end
+            
+            -- Atualiza ícone do botão
+            if not buttonImage then
+                minBButton.Text = "▬"
+            end
+        else
+            -- Minimiza até a barra de título (só mostra a TitleBar)
+            isMinBActive = true
+            
+            if self.ContentFrame then
+                self.ContentFrame.Visible = false
+            end
+            if self.TabBar then
+                self.TabBar.Visible = false
+            end
+            
+            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+            tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 60)}):Play()
+            
+            -- Atualiza ícone do botão
+            if not buttonImage then
+                minBButton.Text = "▭"
+            end
+        end
+    end)
+    
+    -- Ajusta o tamanho do container
+    local currentSize = self.CustomButtonsContainer.Size.X.Offset
+    self.CustomButtonsContainer.Size = UDim2.new(0, currentSize + buttonSize + 5, 1, 0)
+    
+    -- Ajusta posição do container
+    self.CustomButtonsContainer.Position = UDim2.new(1, -(currentSize + buttonSize + 70), 0, 0)
+    
+    return minBButton
 end
-
-return Window
