@@ -51,7 +51,7 @@ function Dialog:_Create()
     self.Gui.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
     self.Gui.BorderSizePixel = 1
     self.Gui.BorderColor3 = Color3.fromRGB(48, 54, 61)
-    self.Gui.ZIndex = 20
+    self.Gui.ZIndex = 21
     self.Gui.Visible = false
     self.Gui.Parent = self.Background
 
@@ -79,7 +79,7 @@ function Dialog:_Create()
     title.TextSize = 14
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Font = Enum.Font.GothamBold
-    title.ZIndex = 17
+    title.ZIndex = 18
     title.Parent = self.Gui
 
     local desc = Instance.new("TextLabel")
@@ -94,7 +94,7 @@ function Dialog:_Create()
     desc.TextYAlignment = Enum.TextYAlignment.Top
     desc.TextWrapped = true
     desc.Font = Enum.Font.Gotham
-    desc.ZIndex = 16
+    desc.ZIndex = 17
     desc.Parent = self.Gui
 
     local optionsContainer = Instance.new("Frame")
@@ -102,7 +102,7 @@ function Dialog:_Create()
     optionsContainer.Size = UDim2.new(1, -20, 0, 40)
     optionsContainer.Position = UDim2.new(0, 10, 1, -50)
     optionsContainer.BackgroundTransparency = 1
-    optionsContainer.ZIndex = 16
+    optionsContainer.ZIndex = 17
     optionsContainer.Parent = self.Gui
 
     local listLayout = Instance.new("UIListLayout")
@@ -122,7 +122,7 @@ function Dialog:_Create()
         button.TextColor3 = Color3.fromRGB(248, 250, 252)
         button.TextSize = 14
         button.Font = Enum.Font.Gotham
-        button.ZIndex = 17
+        button.ZIndex = 18
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 6)
         corner.Parent = button
