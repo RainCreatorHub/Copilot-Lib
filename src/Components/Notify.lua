@@ -21,6 +21,7 @@ local DEFAULT_CONFIG = {
     Title = "Notification",
     Desc = "",
     Icon = nil,
+    Time = 5,  -- Tempo padrão de 5 segundos
     Options = {}
 }
 
@@ -29,12 +30,28 @@ local NOTIFY_MARGIN = 10
 local NOTIFY_WIDTH = 300
 local NOTIFY_HEIGHT = 90
 
+-- Função para reorganizar todas as notificações
+local function ReorganizeStack()
+    for i, notify in ipairs(NOTIFY_STACK) do
+        if notify.Gui and notify.Active then
+            local targetY = 1 - ((NOTIFY_HEIGHT + NOTIFY_MARGIN) * i + NOTIFY_MARGIN)
+            
+            game:GetService("TweenService"):Create(
+                notify.Gui,
+                TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {Position = UDim2.new(1, -(NOTIFY_WIDTH + NOTIFY_MARGIN), 0, targetY)}
+            ):Play()
+        end
+    end
+end
+
 function Notify.new(config, parentWindow)
     local self = setmetatable({}, Notify)
     self.Config = setmetatable(config or {}, { __index = DEFAULT_CONFIG })
     self.ParentWindow = parentWindow
     self.Gui = nil
     self.Active = false
+    self.DismissTimer = nil
     
     self:_Create()
     self:Show()
@@ -98,6 +115,20 @@ function Notify:_Create()
     local accentCorner = Instance.new("UICorner")
     accentCorner.CornerRadius = UDim.new(0, 8)
     accentCorner.Parent = accentBar
+
+    -- Barra de progresso de tempo
+    self.TimeBar = Instance.new("Frame")
+    self.TimeBar.Name = "TimeBar"
+    self.TimeBar.Size = UDim2.new(1, 0, 0, 3)
+    self.TimeBar.Position = UDim2.new(0, 0, 0, 0)
+    self.TimeBar.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+    self.TimeBar.BorderSizePixel = 0
+    self.TimeBar.ZIndex = 1002
+    self.TimeBar.Parent = accentBar
+
+    local timeBarCorner = Instance.new("UICorner")
+    timeBarCorner.CornerRadius = UDim.new(0, 8)
+    timeBarCorner.Parent = self.TimeBar
 
     -- Ícone (se fornecido)
     local contentStartX = 12
@@ -228,7 +259,8 @@ function Notify:_Create()
         self.Gui.Size = UDim2.new(0, NOTIFY_WIDTH, 0, 94)
     end
 
-    table.insert(NOTIFY_STACK, self)
+    -- Adiciona ao stack
+    table.insert(NOTIFY_STACK, 1, self)
 end
 
 function Notify:Show()
@@ -239,8 +271,11 @@ function Notify:Show()
     
     local TweenService = game:GetService("TweenService")
     
+    -- Reorganiza todas as notificações
+    ReorganizeStack()
+    
     -- Animação de entrada elegante
-    self.Gui.Position = UDim2.new(1, 20, 1, -(self.Gui.Size.Y.Offset + NOTIFY_MARGIN))
+    self.Gui.Position = UDim2.new(1, 20, 0, -(#NOTIFY_STACK * (NOTIFY_HEIGHT + NOTIFY_MARGIN)))
     self.Gui.BackgroundTransparency = 1
     
     for _, child in pairs(self.Gui:GetDescendants()) do
@@ -254,10 +289,11 @@ function Notify:Show()
     end
     
     -- Tween de entrada
+    local targetY = 1 - ((NOTIFY_HEIGHT + NOTIFY_MARGIN) * #NOTIFY_STACK + NOTIFY_MARGIN)
     TweenService:Create(
         self.Gui,
         TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-        {Position = UDim2.new(1, -(NOTIFY_WIDTH + NOTIFY_MARGIN), 1, -(self.Gui.Size.Y.Offset + NOTIFY_MARGIN))}
+        {Position = UDim2.new(1, -(NOTIFY_WIDTH + NOTIFY_MARGIN), 0, targetY)}
     ):Play()
     
     TweenService:Create(
@@ -277,19 +313,46 @@ function Notify:Show()
             TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
         end
     end
+    
+    -- Inicia o timer de duração
+    if self.Config.Time and self.Config.Time > 0 and #self.Config.Options == 0 then
+        -- Animação da barra de tempo
+        TweenService:Create(
+            self.TimeBar,
+            TweenInfo.new(self.Config.Time, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+            {Size = UDim2.new(0, 0, 0, 3)}
+        ):Play()
+        
+        -- Timer para auto-dismiss
+        self.DismissTimer = task.delay(self.Config.Time, function()
+            if self.Active then
+                self:Dismiss()
+            end
+        end)
+    else
+        -- Se não tiver tempo ou tiver botões, esconde a barra de tempo
+        self.TimeBar.Visible = false
+    end
 end
 
 function Notify:Dismiss()
     if not self.Active or not self.Gui then return end
     
     self.Active = false
+    
+    -- Cancela o timer se existir
+    if self.DismissTimer then
+        task.cancel(self.DismissTimer)
+        self.DismissTimer = nil
+    end
+    
     local TweenService = game:GetService("TweenService")
     
     -- Animação de saída
     TweenService:Create(
         self.Gui,
         TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-        {Position = UDim2.new(1, 20, 1, -(self.Gui.Size.Y.Offset + NOTIFY_MARGIN))}
+        {Position = UDim2.new(1, 20, 0, self.Gui.Position.Y.Offset)}
     ):Play()
     
     TweenService:Create(
@@ -307,6 +370,9 @@ function Notify:Dismiss()
             break
         end
     end
+    
+    -- Reorganiza as notificações restantes
+    ReorganizeStack()
     
     if self.Gui then
         self.Gui:Destroy()
