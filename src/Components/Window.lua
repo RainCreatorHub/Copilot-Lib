@@ -1,11 +1,6 @@
 -- Window.lua
 local Window = {}
 Window.__index = Window
-local WindowPath = game:GetService("CoreGui"):WaitForChild("DeepLibWindow")
-if WindowPath then
- WindowPath:Destroy()
-end
-
 function Window.new(config)
     local self = setmetatable({}, Window)
     
