@@ -1,3 +1,4 @@
+-- Window.lua
 local Window = {}
 Window.__index = Window
 
@@ -13,16 +14,283 @@ function Window.new(config)
     self.CurrentTab = nil
     self.IsOpen = true
     self.IsMinimized = false
-    self.ActiveDialog = nil -- Controla diálogo ativo
+    self.ActiveDialog = nil
+    
+    -- Sistema de Key
+    self.Key = config.Key or false
+    self.KeyS = config.KeyS or {}
+    self.IsKeyValidated = false
     
     self:_CreateGUI()
-    self:_CreateTitleBar()
-    self:_CreateTabBar()
     
-    -- 🔒 CORREÇÃO: Setup drag só depois do TitleBar estar criado
-    self:_SetupDrag()
+    -- Se Key estiver ativado, mostra a tela de validação
+    if self.Key then
+        self:_ShowKeySystem()
+    else
+        self:_InitializeWindow()
+    end
     
     return self
+end
+
+function Window:_ShowKeySystem()
+    -- Container da tela de Key
+    self.KeyContainer = Instance.new("Frame")
+    self.KeyContainer.Name = "KeySystem"
+    self.KeyContainer.Size = UDim2.new(1, 0, 1, 0)
+    self.KeyContainer.BackgroundColor3 = Color3.fromRGB(22, 27, 34)
+    self.KeyContainer.BorderSizePixel = 0
+    self.KeyContainer.Parent = self.MainFrame
+    self.KeyContainer.ZIndex = 100
+    
+    local keyCorner = Instance.new("UICorner")
+    keyCorner.CornerRadius = UDim.new(0, 12)
+    keyCorner.Parent = self.KeyContainer
+    
+    -- Título
+    local keyTitle = Instance.new("TextLabel")
+    keyTitle.Name = "KeyTitle"
+    keyTitle.Size = UDim2.new(1, -40, 0, 40)
+    keyTitle.Position = UDim2.new(0, 20, 0, 20)
+    keyTitle.BackgroundTransparency = 1
+    keyTitle.Text = self.KeyS.Title or "Key System"
+    keyTitle.TextColor3 = Color3.fromRGB(248, 250, 252)
+    keyTitle.TextSize = 24
+    keyTitle.Font = Enum.Font.GothamBold
+    keyTitle.TextXAlignment = Enum.TextXAlignment.Left
+    keyTitle.Parent = self.KeyContainer
+    
+    -- Descrição
+    local keyDesc = Instance.new("TextLabel")
+    keyDesc.Name = "KeyDesc"
+    keyDesc.Size = UDim2.new(1, -40, 0, 60)
+    keyDesc.Position = UDim2.new(0, 20, 0, 70)
+    keyDesc.BackgroundTransparency = 1
+    keyDesc.Text = self.KeyS.Desc or "Please enter a valid key to continue"
+    keyDesc.TextColor3 = Color3.fromRGB(139, 148, 160)
+    keyDesc.TextSize = 14
+    keyDesc.Font = Enum.Font.Gotham
+    keyDesc.TextXAlignment = Enum.TextXAlignment.Left
+    keyDesc.TextWrapped = true
+    keyDesc.Parent = self.KeyContainer
+    
+    -- Input da Key
+    local keyInputContainer = Instance.new("Frame")
+    keyInputContainer.Name = "KeyInputContainer"
+    keyInputContainer.Size = UDim2.new(1, -40, 0, 45)
+    keyInputContainer.Position = UDim2.new(0, 20, 0, 150)
+    keyInputContainer.BackgroundColor3 = Color3.fromRGB(33, 38, 45)
+    keyInputContainer.BorderSizePixel = 1
+    keyInputContainer.BorderColor3 = Color3.fromRGB(48, 54, 61)
+    keyInputContainer.Parent = self.KeyContainer
+    
+    local inputCorner = Instance.new("UICorner")
+    inputCorner.CornerRadius = UDim.new(0, 8)
+    inputCorner.Parent = keyInputContainer
+    
+    local keyInput = Instance.new("TextBox")
+    keyInput.Name = "KeyInput"
+    keyInput.Size = UDim2.new(1, -20, 1, -10)
+    keyInput.Position = UDim2.new(0, 10, 0, 5)
+    keyInput.BackgroundTransparency = 1
+    keyInput.Text = ""
+    keyInput.PlaceholderText = "Enter your key here..."
+    keyInput.TextColor3 = Color3.fromRGB(248, 250, 252)
+    keyInput.PlaceholderColor3 = Color3.fromRGB(139, 148, 160)
+    keyInput.TextSize = 14
+    keyInput.Font = Enum.Font.Gotham
+    keyInput.TextXAlignment = Enum.TextXAlignment.Left
+    keyInput.ClearTextOnFocus = false
+    keyInput.Parent = keyInputContainer
+    
+    -- Container dos botões
+    local buttonsContainer = Instance.new("Frame")
+    buttonsContainer.Name = "ButtonsContainer"
+    buttonsContainer.Size = UDim2.new(1, -40, 0, 45)
+    buttonsContainer.Position = UDim2.new(0, 20, 0, 210)
+    buttonsContainer.BackgroundTransparency = 1
+    buttonsContainer.Parent = self.KeyContainer
+    
+    -- Botão "Get Key"
+    if self.KeyS.Url and self.KeyS.Url ~= "" then
+        local getKeyButton = Instance.new("TextButton")
+        getKeyButton.Name = "GetKeyButton"
+        getKeyButton.Size = UDim2.new(0.48, 0, 1, 0)
+        getKeyButton.Position = UDim2.new(0, 0, 0, 0)
+        getKeyButton.BackgroundColor3 = Color3.fromRGB(33, 139, 255)
+        getKeyButton.BorderSizePixel = 0
+        getKeyButton.Text = "Get Key"
+        getKeyButton.TextColor3 = Color3.fromRGB(248, 250, 252)
+        getKeyButton.TextSize = 15
+        getKeyButton.Font = Enum.Font.GothamBold
+        getKeyButton.AutoButtonColor = false
+        getKeyButton.Parent = buttonsContainer
+        
+        local getKeyCorner = Instance.new("UICorner")
+        getKeyCorner.CornerRadius = UDim.new(0, 8)
+        getKeyCorner.Parent = getKeyButton
+        
+        -- Animações do botão Get Key
+        local tweenService = game:GetService("TweenService")
+        getKeyButton.MouseEnter:Connect(function()
+            tweenService:Create(getKeyButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 156, 255)}):Play()
+        end)
+        
+        getKeyButton.MouseLeave:Connect(function()
+            tweenService:Create(getKeyButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(33, 139, 255)}):Play()
+        end)
+        
+        getKeyButton.MouseButton1Click:Connect(function()
+            -- Copia a URL para o clipboard (se suportado)
+            if setclipboard then
+                setclipboard(self.KeyS.Url)
+                self:Notify({
+                    Title = "URL Copied!",
+                    Desc = "Key URL has been copied to clipboard",
+                    TimeE = true,
+                    Time = 3
+                })
+            end
+            
+            -- Tenta abrir a URL no navegador
+            if request or http_request or syn and syn.request then
+                local requestFunc = request or http_request or syn.request
+                pcall(function()
+                    requestFunc({
+                        Url = self.KeyS.Url,
+                        Method = "GET"
+                    })
+                end)
+            end
+        end)
+    end
+    
+    -- Botão "Check Key"
+    local checkKeyButton = Instance.new("TextButton")
+    checkKeyButton.Name = "CheckKeyButton"
+    
+    if self.KeyS.Url and self.KeyS.Url ~= "" then
+        checkKeyButton.Size = UDim2.new(0.48, 0, 1, 0)
+        checkKeyButton.Position = UDim2.new(0.52, 0, 0, 0)
+    else
+        checkKeyButton.Size = UDim2.new(1, 0, 1, 0)
+        checkKeyButton.Position = UDim2.new(0, 0, 0, 0)
+    end
+    
+    checkKeyButton.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
+    checkKeyButton.BorderSizePixel = 0
+    checkKeyButton.Text = "Check Key"
+    checkKeyButton.TextColor3 = Color3.fromRGB(248, 250, 252)
+    checkKeyButton.TextSize = 15
+    checkKeyButton.Font = Enum.Font.GothamBold
+    checkKeyButton.AutoButtonColor = false
+    checkKeyButton.Parent = buttonsContainer
+    
+    local checkKeyCorner = Instance.new("UICorner")
+    checkKeyCorner.CornerRadius = UDim.new(0, 8)
+    checkKeyCorner.Parent = checkKeyButton
+    
+    -- Animações do botão Check Key
+    local tweenService = game:GetService("TweenService")
+    checkKeyButton.MouseEnter:Connect(function()
+        tweenService:Create(checkKeyButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(52, 187, 89)}):Play()
+    end)
+    
+    checkKeyButton.MouseLeave:Connect(function()
+        tweenService:Create(checkKeyButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 167, 69)}):Play()
+    end)
+    
+    -- Label de status
+    local statusLabel = Instance.new("TextLabel")
+    statusLabel.Name = "StatusLabel"
+    statusLabel.Size = UDim2.new(1, -40, 0, 30)
+    statusLabel.Position = UDim2.new(0, 20, 0, 270)
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.Text = ""
+    statusLabel.TextColor3 = Color3.fromRGB(220, 53, 69)
+    statusLabel.TextSize = 13
+    statusLabel.Font = Enum.Font.Gotham
+    statusLabel.TextXAlignment = Enum.TextXAlignment.Center
+    statusLabel.Parent = self.KeyContainer
+    
+    -- Função para validar a key
+    checkKeyButton.MouseButton1Click:Connect(function()
+        local enteredKey = keyInput.Text
+        
+        if enteredKey == "" then
+            statusLabel.Text = "Please enter a key"
+            statusLabel.TextColor3 = Color3.fromRGB(220, 53, 69)
+            return
+        end
+        
+        -- Valida a key
+        local isValid = false
+        if self.KeyS.Key then
+            for _, validKey in ipairs(self.KeyS.Key) do
+                if enteredKey == validKey then
+                    isValid = true
+                    break
+                end
+            end
+        end
+        
+        if isValid then
+            statusLabel.Text = "Key validated! Loading..."
+            statusLabel.TextColor3 = Color3.fromRGB(40, 167, 69)
+            
+            self.IsKeyValidated = true
+            
+            -- Animação de saída da tela de key
+            tweenService:Create(
+                self.KeyContainer,
+                TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {Position = UDim2.new(0, 0, -1, 0)}
+            ):Play()
+            
+            task.wait(0.3)
+            self.KeyContainer:Destroy()
+            self.KeyContainer = nil
+            
+            -- Inicializa a janela
+            self:_InitializeWindow()
+            
+            self:Notify({
+                Title = "Access Granted!",
+                Desc = "Welcome to the hub!",
+                TimeE = true,
+                Time = 3
+            })
+        else
+            statusLabel.Text = "Invalid key! Please try again"
+            statusLabel.TextColor3 = Color3.fromRGB(220, 53, 69)
+            
+            -- Animação de shake no input
+            local originalPos = keyInputContainer.Position
+            tweenService:Create(keyInputContainer, TweenInfo.new(0.05), {Position = originalPos + UDim2.new(0, -10, 0, 0)}):Play()
+            task.wait(0.05)
+            tweenService:Create(keyInputContainer, TweenInfo.new(0.05), {Position = originalPos + UDim2.new(0, 10, 0, 0)}):Play()
+            task.wait(0.05)
+            tweenService:Create(keyInputContainer, TweenInfo.new(0.05), {Position = originalPos}):Play()
+        end
+    end)
+    
+    -- Suporte para Enter key
+    keyInput.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            checkKeyButton.MouseButton1Click:Fire()
+        end
+    end)
+end
+
+function Window:_InitializeWindow()
+    -- Cria a área de conteúdo se ainda não existir
+    if not self.ContentFrame then
+        self:_CreateContentArea()
+    end
+    
+    self:_CreateTitleBar()
+    self:_CreateTabBar()
+    self:_SetupDrag()
 end
 
 function Window:_CreateGUI()
@@ -34,7 +302,7 @@ function Window:_CreateGUI()
     self.ScreenGui.IgnoreGuiInset = true
     self.ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     
-    -- Main Window Container - Tamanho fixo 470x340
+    -- Main Window Container
     self.MainFrame = Instance.new("Frame")
     self.MainFrame.Name = "MainWindow"
     self.MainFrame.Size = UDim2.new(0, 470, 0, 340)
@@ -64,32 +332,7 @@ function Window:_CreateGUI()
     glow.Parent = self.MainFrame
     glow.ZIndex = 0
     
-    -- Content area com scroll
-    self.ContentFrame = Instance.new("ScrollingFrame")
-    self.ContentFrame.Name = "Content"
-    self.ContentFrame.Size = UDim2.new(1, -150, 1, -70)
-    self.ContentFrame.Position = UDim2.new(0, 140, 0, 60)
-    self.ContentFrame.BackgroundTransparency = 1
-    self.ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(48, 54, 61)
-    self.ContentFrame.ScrollBarThickness = 4
-    self.ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    self.ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    self.ContentFrame.Parent = self.MainFrame
-    
-    -- UIListLayout para conteúdo com scroll
-    local listLayout = Instance.new("UIListLayout")
-    listLayout.Padding = UDim.new(0, 8)
-    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    listLayout.Parent = self.ContentFrame
-    
-    local padding = Instance.new("UIPadding")
-    padding.PaddingTop = UDim.new(0, 5)
-    padding.PaddingRight = UDim.new(0, 5)
-    padding.PaddingBottom = UDim.new(0, 5)
-    padding.PaddingLeft = UDim.new(0, 5)
-    padding.Parent = self.ContentFrame
-    
-    -- 🔥 CORREÇÃO: Container para diálogos usando o mesmo método do window
+    -- Container para diálogos
     self.DialogContainer = Instance.new("Frame")
     self.DialogContainer.Name = "DialogContainer"
     self.DialogContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -100,7 +343,7 @@ function Window:_CreateGUI()
     self.DialogContainer.ZIndex = 20
     self.DialogContainer.Parent = self.MainFrame
     
-    -- Overlay escuro para diálogos (mesmo estilo do window)
+    -- Overlay escuro para diálogos
     self.DialogOverlay = Instance.new("Frame")
     self.DialogOverlay.Name = "DialogOverlay"
     self.DialogOverlay.Size = UDim2.new(1, 0, 1, 0)
@@ -117,8 +360,32 @@ function Window:_CreateGUI()
     overlayCorner.Parent = self.DialogOverlay
 end
 
+function Window:_CreateContentArea()
+    self.ContentFrame = Instance.new("ScrollingFrame")
+    self.ContentFrame.Name = "Content"
+    self.ContentFrame.Size = UDim2.new(1, -150, 1, -70)
+    self.ContentFrame.Position = UDim2.new(0, 140, 0, 60)
+    self.ContentFrame.BackgroundTransparency = 1
+    self.ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(48, 54, 61)
+    self.ContentFrame.ScrollBarThickness = 4
+    self.ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    self.ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    self.ContentFrame.Parent = self.MainFrame
+    
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.Padding = UDim.new(0, 8)
+    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    listLayout.Parent = self.ContentFrame
+    
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop = UDim.new(0, 5)
+    padding.PaddingRight = UDim.new(0, 5)
+    padding.PaddingBottom = UDim.new(0, 5)
+    padding.PaddingLeft = UDim.new(0, 5)
+    padding.Parent = self.ContentFrame
+end
+
 function Window:_SetupDrag()
-    -- 🔒 CORREÇÃO: Verificação de segurança
     if not self.TitleBar or not self.TitleBar.Container then
         warn("⚠️ TitleBar não está pronto para drag")
         return
@@ -140,7 +407,6 @@ function Window:_SetupDrag()
         )
     end
     
-    -- Input Began no titlebar
     self.TitleBar.Container.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
@@ -157,14 +423,12 @@ function Window:_SetupDrag()
         end
     end)
     
-    -- Input Changed
     self.TitleBar.Container.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
     
-    -- Update durante o drag
     RunService.Heartbeat:Connect(function()
         if dragging and dragInput then
             update(dragInput)
@@ -188,7 +452,6 @@ function Window:_CreateTitleBar()
 end
 
 function Window:_CreateTabBar()
-    -- Tab Bar Container (lateral esquerdo)
     self.TabBar = Instance.new("Frame")
     self.TabBar.Name = "TabBar"
     self.TabBar.Size = UDim2.new(0, 130, 1, -60)
@@ -197,7 +460,6 @@ function Window:_CreateTabBar()
     self.TabBar.BorderSizePixel = 0
     self.TabBar.Parent = self.MainFrame
     
-    -- Gradiente na tab bar
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(22, 27, 34)),
@@ -206,7 +468,6 @@ function Window:_CreateTabBar()
     gradient.Rotation = 90
     gradient.Parent = self.TabBar
     
-    -- Container para os botões das tabs
     self.TabButtonsContainer = Instance.new("Frame")
     self.TabButtonsContainer.Name = "TabButtons"
     self.TabButtonsContainer.Size = UDim2.new(1, -10, 1, -15)
@@ -214,7 +475,6 @@ function Window:_CreateTabBar()
     self.TabButtonsContainer.BackgroundTransparency = 1
     self.TabButtonsContainer.Parent = self.TabBar
     
-    -- ScrollingFrame para as tabs
     self.TabScroll = Instance.new("ScrollingFrame")
     self.TabScroll.Name = "TabScroll"
     self.TabScroll.Size = UDim2.new(1, 0, 1, 0)
@@ -238,7 +498,6 @@ function Window:_CreateTabBar()
 end
 
 function Window:CloseDialog()
-    -- Verifica se já existe um diálogo ativo
     if self.ActiveDialog then
         return
     end
@@ -279,7 +538,6 @@ function Window:Minimize()
     local tweenService = game:GetService("TweenService")
     
     if self.IsMinimized then
-        -- Restaurar janela
         self.IsMinimized = false
         self.TitleBar:SetMinimizeState(false)
         
@@ -287,16 +545,23 @@ function Window:Minimize()
         local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 340)})
         
         sizeTween:Play()
-        self.ContentFrame.Visible = true
-        self.TabBar.Visible = true
+        if self.ContentFrame then
+            self.ContentFrame.Visible = true
+        end
+        if self.TabBar then
+            self.TabBar.Visible = true
+        end
         
     else
-        -- Minimizar janela
         self.IsMinimized = true
         self.TitleBar:SetMinimizeState(true)
         
-        self.ContentFrame.Visible = false
-        self.TabBar.Visible = false
+        if self.ContentFrame then
+            self.ContentFrame.Visible = false
+        end
+        if self.TabBar then
+            self.TabBar.Visible = false
+        end
         
         local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         local sizeTween = tweenService:Create(self.MainFrame, tweenInfo, {Size = UDim2.new(0, 470, 0, 60)})
@@ -304,26 +569,22 @@ function Window:Minimize()
     end
 end
 
--- 🔥 CORREÇÃO: Método para obter o container de diálogos
 function Window:GetDialogContainer()
     return self.DialogContainer
 end
 
--- 🔥 CORREÇÃO: Método para mostrar/ocultar container de diálogos
 function Window:SetDialogContainerVisible(visible)
     if self.DialogContainer and self.DialogOverlay then
         self.DialogContainer.Visible = visible
         self.DialogOverlay.Visible = visible
         
         if visible then
-            -- Garante que o container de diálogo fique acima de tudo
             self.DialogContainer.ZIndex = 20
             self.DialogOverlay.ZIndex = 19
         end
     end
 end
 
--- Public Methods
 function Window:SetTitle(newTitle)
     self.Title = newTitle
     if self.TitleBar and self.TitleBar.UpdateTitle then
@@ -404,7 +665,6 @@ function Window:Open()
         self.MainFrame.BackgroundTransparency = 0
         self.MainFrame.Glow.ImageTransparency = 0.8
         
-        -- Animação de entrada
         self.MainFrame.Position = UDim2.new(0.5, 0, 0.4, 0)
         self.MainFrame.Size = UDim2.new(0, 0, 0, 0)
         
@@ -440,21 +700,17 @@ function Window:Notify(notifyConfig)
 end
 
 function Window:Dialog(dialogConfig)
-    -- Verifica se já existe um diálogo ativo
     if self.ActiveDialog then
         return self.ActiveDialog
     end
     
     local DialogModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/RainCreatorHub/Deep-Lib/refs/heads/main/src/Components/Dialog.lua"))()
     
-    -- 🔥 CORREÇÃO: Mostra o container de diálogos antes de criar o diálogo
     self:SetDialogContainerVisible(true)
     
-    -- 🔥 CORREÇÃO: Passa o container de diálogos para centralizar no window
     local newDialog = DialogModule.new(dialogConfig, self, self.DialogContainer)
     self.ActiveDialog = newDialog
     
-    -- 🔥 CORREÇÃO: Quando o diálogo fechar, esconde o container
     if newDialog and newDialog.Close then
         local originalClose = newDialog.Close
         newDialog.Close = function(...)
@@ -467,13 +723,11 @@ function Window:Dialog(dialogConfig)
     return newDialog
 end
 
--- Método para limpar diálogo ativo
 function Window:ClearActiveDialog()
     self.ActiveDialog = nil
     self:SetDialogContainerVisible(false)
 end
 
--- Método para mudar de tab
 function Window:SwitchToTab(tab)
     if self.CurrentTab then
         self.CurrentTab:SetVisible(false)
