@@ -1,6 +1,10 @@
 -- Window.lua
 local Window = {}
 Window.__index = Window
+local WindowPath = game:GetService("CoreGui"):WaitForChild("DeepLibWindow")
+if WindowPath then
+ WindowPath:Destroy()
+end
 
 function Window.new(config)
     local self = setmetatable({}, Window)
@@ -300,7 +304,7 @@ function Window:_CreateGUI()
     self.ScreenGui.ResetOnSpawn = false
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     self.ScreenGui.IgnoreGuiInset = true
-    self.ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    self.ScreenGui.Parent = game:WaitForChild("CoreGui")
     
     -- Main Window Container
     self.MainFrame = Instance.new("Frame")
